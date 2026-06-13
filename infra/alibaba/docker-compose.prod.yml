@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  opspilot-backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: opspilot-backend
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: "OpsPilot Backend"
+      APP_ENV: "prod"
+      APP_HOST: "0.0.0.0"
+      APP_PORT: "8000"
+
+      USE_MOCK_LLM: "true"
+      FALLBACK_TO_MOCK_ON_ERROR: "true"
+
+      QWEN_API_BASE: "${QWEN_API_BASE:-https://dashscope-intl.aliyuncs.com/compatible-mode/v1}"
+      QWEN_API_KEY: "${QWEN_API_KEY:-replace_me}"
+      QWEN_MODEL: "${QWEN_MODEL:-qwen-plus}"
+    restart: unless-stopped

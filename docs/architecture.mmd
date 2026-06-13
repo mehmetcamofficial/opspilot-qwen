@@ -1,0 +1,37 @@
+flowchart TD
+    SRE[Human Operator / SRE] --> FE[Next.js OpsPilot Dashboard]
+    FE --> API[FastAPI Backend API]
+    API --> ORCH[Incident Orchestrator]
+
+    ORCH --> TRIAGE[Triage Agent]
+    ORCH --> OBS[Observability Agent]
+    ORCH --> RUNBOOK[Runbook Retrieval Agent]
+    ORCH --> HYPO[Hypothesis Agent]
+    ORCH --> PLAN[Remediation Planner Agent]
+    ORCH --> RISK[Risk & Safety Agent]
+    ORCH --> APPROVAL[Approval Agent]
+    ORCH --> EXEC[Remediation Executor]
+    ORCH --> REVIEW[Execution Review Agent]
+    ORCH --> POST[Postmortem Agent]
+
+    TRIAGE --> QWEN[Qwen Cloud Model API]
+    OBS --> QWEN
+    RUNBOOK --> QWEN
+    HYPO --> QWEN
+    PLAN --> QWEN
+    RISK --> QWEN
+    APPROVAL --> QWEN
+    REVIEW --> QWEN
+    POST --> QWEN
+
+    OBS --> METRICS[Metrics Tool]
+    OBS --> LOGS[Logs Tool]
+    OBS --> DEPLOY[Deployment History Tool]
+    RUNBOOK --> RAG[Runbook and Prior Incident Retrieval]
+    EXEC --> ACTION[Controlled Remediation Simulation]
+
+    ORCH --> STATE[Incident State Store]
+    ORCH --> AUDIT[Agent Timeline and Audit Trail]
+
+    API -. planned deployment .-> ECS[Alibaba Cloud ECS]
+    FE -. deployed .-> VERCEL[Vercel Frontend]
