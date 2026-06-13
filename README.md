@@ -123,7 +123,7 @@ Safety principles:
 * low-confidence situations can be escalated
 
 ## Architecture
-![OpsPilot Architecture](docs/architecture.png)
+![OpsPilot Architecture](docs/architecture.svg)
 
 Architecture documentation:
 
