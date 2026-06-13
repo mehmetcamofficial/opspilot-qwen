@@ -124,7 +124,13 @@ Safety principles:
 
 ## Architecture
 
+### Polished workflow architecture
+
 ![OpsPilot Architecture Workflow](docs/architecture_workflow_diagram.png)
+
+### Technical Mermaid architecture
+
+![OpsPilot Technical Architecture](docs/architecture.svg)
 
 Architecture documentation:
 
