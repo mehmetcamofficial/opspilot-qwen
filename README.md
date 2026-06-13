@@ -123,12 +123,14 @@ Safety principles:
 * low-confidence situations can be escalated
 
 ## Architecture
-![OpsPilot Architecture](docs/architecture.svg)
+
+![OpsPilot Architecture Workflow](docs/architecture_workflow_diagram.png)
 
 Architecture documentation:
 
-* `docs/architecture.md`
-* `docs/architecture.mmd`
+- `docs/architecture.md`
+- `docs/architecture.mmd`
+- `docs/architecture.svg`
 
 Core components:
 
