@@ -1,37 +1,39 @@
 flowchart TD
-    SRE[Human Operator / SRE] --> FE[Next.js OpsPilot Dashboard]
-    FE --> API[FastAPI Backend API]
-    API --> ORCH[Incident Orchestrator]
+USER[Human Operator / SRE] --> UI[Next.js OpsPilot Dashboard<br/>Vercel Frontend]
 
-    ORCH --> TRIAGE[Triage Agent]
-    ORCH --> OBS[Observability Agent]
-    ORCH --> RUNBOOK[Runbook Retrieval Agent]
-    ORCH --> HYPO[Hypothesis Agent]
-    ORCH --> PLAN[Remediation Planner Agent]
-    ORCH --> RISK[Risk & Safety Agent]
-    ORCH --> APPROVAL[Approval Agent]
-    ORCH --> EXEC[Remediation Executor]
-    ORCH --> REVIEW[Execution Review Agent]
-    ORCH --> POST[Postmortem Agent]
+```
+UI --> API[FastAPI Backend API<br/>Incident and Approval Endpoints]
 
-    TRIAGE --> QWEN[Qwen Cloud Model API]
-    OBS --> QWEN
-    RUNBOOK --> QWEN
-    HYPO --> QWEN
-    PLAN --> QWEN
-    RISK --> QWEN
-    APPROVAL --> QWEN
-    REVIEW --> QWEN
-    POST --> QWEN
+API --> ORCH[Multi-Agent Incident Orchestrator]
 
-    OBS --> METRICS[Metrics Tool]
-    OBS --> LOGS[Logs Tool]
-    OBS --> DEPLOY[Deployment History Tool]
-    RUNBOOK --> RAG[Runbook and Prior Incident Retrieval]
-    EXEC --> ACTION[Controlled Remediation Simulation]
+ORCH --> A1[Triage Agent<br/>Severity, impact, blast radius]
+ORCH --> A2[Observability Agent<br/>Metrics, logs, deployments]
+ORCH --> A3[Runbook Agent<br/>Runbooks and prior incidents]
+ORCH --> A4[Hypothesis Agent<br/>Ranked root-cause analysis]
+ORCH --> A5[Remediation Planner<br/>Safe action and rollback plan]
+ORCH --> A6[Risk & Safety Agent<br/>Policy and approval check]
+ORCH --> A7[Approval Agent<br/>Human decision brief]
 
-    ORCH --> STATE[Incident State Store]
-    ORCH --> AUDIT[Agent Timeline and Audit Trail]
+A7 --> APPROVAL{Human Approval Required?}
 
-    API -. planned deployment .-> ECS[Alibaba Cloud ECS]
-    FE -. deployed .-> VERCEL[Vercel Frontend]
+APPROVAL -->|Approved| EXEC[Remediation Executor<br/>Controlled action simulation]
+APPROVAL -->|Blocked| STOP[Stop / Escalate]
+
+EXEC --> REVIEW[Execution Review Agent<br/>Before and after comparison]
+REVIEW --> POST[Postmortem Agent<br/>Root cause and follow-up actions]
+
+ORCH --> AUDIT[Agent Timeline<br/>Audit Trail]
+ORCH --> STATE[Incident State Store]
+
+A1 --> QWEN[Qwen Cloud Model API<br/>Real mode after credits]
+A2 --> TOOLS[Operational Tools<br/>Metrics, logs, deployment history]
+A3 --> KB[Runbook Knowledge Base]
+A4 --> QWEN
+A5 --> QWEN
+A6 --> QWEN
+A7 --> QWEN
+POST --> QWEN
+
+API -. planned .-> ECS[Alibaba Cloud ECS<br/>Dockerized Backend]
+```
+
