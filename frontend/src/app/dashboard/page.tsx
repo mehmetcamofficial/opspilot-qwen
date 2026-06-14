@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
   return (
     <PlatformShell>
-      <section className="mx-auto max-w-7xl px-6 pb-20 pt-10">
+      <section className="mx-auto max-w-7xl px-6 pb-16 pt-8">
         {toast && (
           <div className="fixed right-6 top-24 z-[80] rounded-2xl border border-cyan-400/20 bg-slate-950/95 p-4 shadow-[0_0_40px_rgba(34,211,238,0.16)]">
             <div className="text-sm font-bold text-white">{toast}</div>
@@ -288,6 +288,23 @@ export default function DashboardPage() {
               </button>
             </section>
 
+            <section className="rounded-3xl border border-violet-400/20 bg-violet-400/10 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-white">Approval Drawer</h2>
+                  <p className="mt-1 text-sm text-violet-100/80">Operator decision package before remediation.</p>
+                </div>
+                <StatusBadge label={isResolved ? "closed" : "review"} tone={isResolved ? "green" : "violet"} />
+              </div>
+
+              <div className="mt-5 space-y-3">
+                <ApprovalLine label="Recommended action" value={recommendedAction(incident)} />
+                <ApprovalLine label="Evidence used" value="metrics + logs + deployment + runbook" />
+                <ApprovalLine label="Policy triggered" value="production rollback requires approval" />
+                <ApprovalLine label="Rollback safety" value="reversible config change" />
+              </div>
+            </section>
+
             <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
               <h2 className="text-2xl font-black text-white">Audit trail</h2>
               <div className="mt-5 space-y-3">
@@ -317,10 +334,28 @@ export default function DashboardPage() {
           </section>
 
           <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-            <h2 className="text-2xl font-black text-white">Outcome and postmortem</h2>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-white">Execution Review</h2>
+                <p className="mt-1 text-sm text-slate-400">What happened after approval and how the platform verified recovery.</p>
+              </div>
+              <StatusBadge label={isResolved ? "verified" : "pending"} tone={isResolved ? "green" : "amber"} />
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <MiniReview label="Action" value={isResolved ? "Rollback executed" : "Waiting approval"} />
+              <MiniReview label="Validation" value={isResolved ? "Latency recovered" : "Not started"} />
+              <MiniReview label="Risk" value={isResolved ? "Reduced" : "Medium"} />
+            </div>
+
             <div className={`mt-5 rounded-3xl border p-5 ${isResolved ? "border-emerald-400/20 bg-emerald-400/10" : "border-white/10 bg-white/[0.035]"}`}>
-              <h3 className="font-black text-white">{isResolved ? "Postmortem generated" : "Postmortem preview"}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-300">{postmortemSummary(incident)}</p>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-black text-white">{isResolved ? "Postmortem generated" : "Postmortem preview"}</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">{postmortemSummary(incident)}</p>
+                </div>
+                <StatusBadge label={isResolved ? "final" : "draft"} tone={isResolved ? "green" : "slate"} />
+              </div>
             </div>
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
@@ -385,6 +420,24 @@ function AuditItem({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-3 text-sm">
       <span className="font-semibold text-slate-200">{label}</span>
       <span className="font-mono text-cyan-200">{value}</span>
+    </div>
+  );
+}
+
+function ApprovalLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-violet-400/20 bg-slate-950/40 p-3">
+      <div className="text-xs uppercase tracking-wider text-violet-200/70">{label}</div>
+      <div className="mt-1 text-sm font-semibold leading-6 text-violet-50">{value}</div>
+    </div>
+  );
+}
+
+function MiniReview({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+      <div className="text-xs uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="mt-2 font-black text-white">{value}</div>
     </div>
   );
 }
