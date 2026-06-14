@@ -8,44 +8,13 @@ import { approveIncident, createIncident, healthcheck, listIncidents } from "@/l
 type IncidentState = any;
 type EvidenceTab = "metrics" | "logs" | "deployments" | "runbooks";
 
-const stateMachine = [
-  "triaging",
-  "investigating",
-  "hypothesis",
-  "awaiting approval",
-  "remediating",
-  "monitoring",
-  "resolved",
-];
-
-const incidentTemplates = [
-  "Checkout API latency spike",
-  "Payment error rate increase",
-  "Database connection saturation",
-  "Authentication failure spike",
-];
+const stateMachine = ["triaging", "investigating", "hypothesis", "awaiting approval", "remediating", "monitoring", "resolved"];
 
 const defaultEvidence: Record<EvidenceTab, string[]> = {
-  metrics: [
-    "p95 latency increased from 420ms to 2.8s",
-    "cache hit ratio dropped from 91% to 41%",
-    "database latency increased by 63%",
-  ],
-  logs: [
-    "Repeated cache-miss fallback warnings detected",
-    "Checkout workers report increased downstream retries",
-    "No security-related error pattern detected",
-  ],
-  deployments: [
-    "Recent cache configuration change detected",
-    "No application code deployment in the last 30 minutes",
-    "Rollback candidate identified: cache-config-v18",
-  ],
-  runbooks: [
-    "Runbook match: cache configuration rollback",
-    "Validation step: confirm cache hit ratio recovery",
-    "Rollback plan: restore previous cache TTL and routing config",
-  ],
+  metrics: ["p95 latency increased from 420ms to 2.8s", "cache hit ratio dropped from 91% to 41%", "database latency increased by 63%"],
+  logs: ["Repeated cache-miss fallback warnings detected", "Checkout workers report increased downstream retries", "No security-related error pattern detected"],
+  deployments: ["Recent cache configuration change detected", "No application code deployment in the last 30 minutes", "Rollback candidate identified: cache-config-v18"],
+  runbooks: ["Runbook match: cache configuration rollback", "Validation step: confirm cache hit ratio recovery", "Rollback plan: restore previous cache TTL and routing config"],
 };
 
 function toneForStatus(status: string): "cyan" | "green" | "amber" | "violet" | "slate" {
@@ -62,29 +31,19 @@ function normalizeStatus(status?: string) {
 }
 
 function leadingHypothesis(state: IncidentState | null) {
-  return (
-    state?.hypothesis_result?.ranked_hypotheses?.[0]?.summary ||
-    "Cache configuration regression introduced in the latest config change"
-  );
+  return state?.hypothesis_result?.ranked_hypotheses?.[0]?.summary || "Cache configuration regression introduced in the latest config change";
 }
 
 function recommendedAction(state: IncidentState | null) {
-  return (
-    state?.remediation_plan?.candidate_actions?.[0]?.title ||
-    "Rollback cache configuration safely"
-  );
+  return state?.remediation_plan?.candidate_actions?.[0]?.title || "Rollback cache configuration safely";
 }
 
 function postmortemSummary(state: IncidentState | null) {
-  return (
-    state?.postmortem?.summary ||
-    "The incident was likely caused by cache config regression and mitigated with approval-gated rollback."
-  );
+  return state?.postmortem?.summary || "The incident was likely caused by cache config regression and mitigated with approval-gated rollback.";
 }
 
 function timelineFromState(state: IncidentState | null) {
   if (state?.agent_timeline?.length) return state.agent_timeline;
-
   return [
     { agent: "triage_agent", status: "waiting" },
     { agent: "observability_agent", status: "waiting" },
@@ -102,20 +61,27 @@ export default function DashboardPage() {
   const [incidents, setIncidents] = useState<IncidentState[]>([]);
   const [loading, setLoading] = useState(false);
   const [evidenceTab, setEvidenceTab] = useState<EvidenceTab>("metrics");
-  const [template, setTemplate] = useState(incidentTemplates[0]);
+  const [toast, setToast] = useState<string | null>(null);
 
   const status = normalizeStatus(incident?.status);
   const timeline = timelineFromState(incident);
   const isResolved = status === "resolved";
   const isAwaitingApproval = status.includes("approval");
 
+  function notify(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 2200);
+  }
+
   async function checkBackend() {
     setLoading(true);
     try {
       const data = await healthcheck();
       setBackendStatus(`${data.status} | mock_llm=${data.mock_llm}`);
+      notify("Backend healthcheck completed.");
     } catch (error: any) {
       setBackendStatus(`error: ${error.message}`);
+      notify("Backend check failed. Start FastAPI backend first.");
     } finally {
       setLoading(false);
     }
@@ -126,6 +92,7 @@ export default function DashboardPage() {
     try {
       const data = await createIncident();
       setIncident(data.state ?? data);
+      notify("Demo incident started. Safety gate is waiting for approval.");
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -138,6 +105,7 @@ export default function DashboardPage() {
     try {
       const data = await listIncidents();
       setIncidents(data.incidents || []);
+      notify("Stored incidents refreshed.");
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -146,11 +114,16 @@ export default function DashboardPage() {
   }
 
   async function approve() {
-    if (!incident?.incident_id) return;
+    if (!incident?.incident_id) {
+      notify("Start an incident before approval.");
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await approveIncident(incident.incident_id);
       setIncident(data.state ?? data);
+      notify("Remediation approved. Execution review and postmortem generated.");
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -158,9 +131,37 @@ export default function DashboardPage() {
     }
   }
 
+  async function copyIncidentSummary() {
+    const summary = {
+      incident_id: incident?.incident_id || "no-active-incident",
+      status,
+      hypothesis: leadingHypothesis(incident),
+      recommended_action: recommendedAction(incident),
+      postmortem: postmortemSummary(incident),
+    };
+    await navigator.clipboard?.writeText(JSON.stringify(summary, null, 2)).catch(() => undefined);
+    notify("Incident summary copied to clipboard.");
+  }
+
+  async function exportAuditLog() {
+    const audit = timeline.map((item: any, index: number) => ({
+      step: index + 1,
+      agent: item.agent,
+      status: item.status || "completed",
+    }));
+    await navigator.clipboard?.writeText(JSON.stringify(audit, null, 2)).catch(() => undefined);
+    notify("Audit log copied to clipboard.");
+  }
+
   return (
     <PlatformShell>
       <section className="mx-auto max-w-7xl px-6 pb-20 pt-10">
+        {toast && (
+          <div className="fixed right-6 top-24 z-[80] rounded-2xl border border-cyan-400/20 bg-slate-950/95 p-4 shadow-[0_0_40px_rgba(34,211,238,0.16)]">
+            <div className="text-sm font-bold text-white">{toast}</div>
+          </div>
+        )}
+
         <div className="mb-6 rounded-3xl border border-white/10 bg-slate-950/70 p-5">
           <div className="grid gap-3 md:grid-cols-4">
             <SystemStripItem label="Frontend" value="Vercel / local" tone="green" />
@@ -179,44 +180,14 @@ export default function DashboardPage() {
             </div>
             <h1 className="text-4xl font-black text-white md:text-6xl">Incident lifecycle console</h1>
             <p className="mt-4 max-w-3xl text-slate-400">
-              Investigate the incident, trace evidence, review policy decisions, approve remediation, and generate an auditable postmortem.
+              Trace evidence, review policy decisions, approve remediation, and generate an auditable postmortem.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button onClick={checkBackend} disabled={loading} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08] disabled:opacity-50">
-              Check Backend
-            </button>
-            <button onClick={startIncident} disabled={loading} className="rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-black text-slate-950 hover:bg-cyan-200 disabled:opacity-50">
-              Start Incident
-            </button>
-            <button onClick={refreshIncidents} disabled={loading} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08] disabled:opacity-50">
-              Refresh
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.035] p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-sm font-black text-white">Incident template</div>
-              <div className="mt-1 text-sm text-slate-400">Choose a demo scenario before starting the workflow.</div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {incidentTemplates.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setTemplate(item)}
-                  className={`rounded-full border px-4 py-2 text-sm font-bold ${
-                    template === item
-                      ? "border-cyan-300 bg-cyan-300 text-slate-950"
-                      : "border-white/10 bg-slate-950/50 text-slate-300 hover:bg-white/[0.08]"
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
+            <button onClick={checkBackend} disabled={loading} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08] disabled:opacity-50">Check Backend</button>
+            <button onClick={startIncident} disabled={loading} className="rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-black text-slate-950 hover:bg-cyan-200 disabled:opacity-50">Start Incident</button>
+            <button onClick={refreshIncidents} disabled={loading} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08] disabled:opacity-50">Refresh</button>
           </div>
         </div>
 
@@ -224,22 +195,10 @@ export default function DashboardPage() {
           <h2 className="text-xl font-black text-white">Incident state machine</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-7">
             {stateMachine.map((state, index) => {
-              const active =
-                status === state ||
-                (status === "awaiting approval" && state === "awaiting approval") ||
-                (status === "standby" && index === 0);
-              const passed = incident && index < 4;
+              const active = status === state || (status === "standby" && index === 0);
+              const passed = Boolean(incident) && index <= 3;
               return (
-                <div
-                  key={state}
-                  className={`rounded-2xl border p-3 ${
-                    active
-                      ? "border-cyan-300 bg-cyan-300 text-slate-950"
-                      : passed
-                      ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
-                      : "border-white/10 bg-white/[0.035] text-slate-400"
-                  }`}
-                >
+                <div key={state} className={`rounded-2xl border p-3 ${active ? "border-cyan-300 bg-cyan-300 text-slate-950" : passed ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-100" : "border-white/10 bg-white/[0.035] text-slate-400"}`}>
                   <div className="text-xs font-black uppercase tracking-wider">Step {index + 1}</div>
                   <div className="mt-1 text-sm font-black">{state}</div>
                 </div>
@@ -248,7 +207,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[0.9fr_1.15fr_0.95fr]">
+        <div className="grid items-start gap-6 xl:grid-cols-[0.9fr_1.15fr_0.95fr]">
           <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -263,8 +222,8 @@ export default function DashboardPage() {
               <MetricCard title="Environment" value="production" />
               <MetricCard title="Severity" value={incident?.triage_result?.severity || "high"} />
               <MetricCard title="Business impact" value="checkout degraded" />
-              <MetricCard title="Hypothesis confidence" value={String(incident?.hypothesis_result?.confidence || "0.86")} />
-              <MetricCard title="Operational risk" value={incident?.risk_review?.risk_level || "medium"} />
+              <MetricCard title="Confidence" value={String(incident?.hypothesis_result?.confidence || "0.86")} />
+              <MetricCard title="Risk" value={incident?.risk_review?.risk_level || "medium"} />
             </div>
 
             <div className="mt-6 rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-5">
@@ -284,15 +243,7 @@ export default function DashboardPage() {
 
             <div className="mt-5 flex flex-wrap gap-2">
               {(["metrics", "logs", "deployments", "runbooks"] as EvidenceTab[]).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setEvidenceTab(tab)}
-                  className={`rounded-full border px-4 py-2 text-sm font-bold ${
-                    evidenceTab === tab
-                      ? "border-cyan-300 bg-cyan-300 text-slate-950"
-                      : "border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"
-                  }`}
-                >
+                <button key={tab} onClick={() => setEvidenceTab(tab)} className={`rounded-full border px-4 py-2 text-sm font-bold ${evidenceTab === tab ? "border-cyan-300 bg-cyan-300 text-slate-950" : "border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"}`}>
                   {tab}
                 </button>
               ))}
@@ -307,10 +258,10 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            <div className="mt-6 rounded-3xl border border-violet-400/20 bg-violet-400/10 p-5">
+            <div className="mt-5 rounded-3xl border border-violet-400/20 bg-violet-400/10 p-5">
               <h3 className="font-black text-white">Why multi-agent?</h3>
               <p className="mt-3 text-sm leading-6 text-slate-300">
-                Triage, evidence analysis, hypothesis ranking, risk review, approval briefing, and postmortem generation are separated for safer and more auditable reasoning.
+                Each agent owns one decision boundary: triage, evidence, hypothesis, risk, approval, execution review, and postmortem.
               </p>
             </div>
           </section>
@@ -322,7 +273,7 @@ export default function DashboardPage() {
                   <h2 className="text-2xl font-black text-white">Safety Gate</h2>
                   <p className="mt-1 text-sm text-amber-100/80">Policy-aware control before production action.</p>
                 </div>
-                <StatusBadge label="approval required" tone="amber" />
+                <StatusBadge label={isResolved ? "approved" : "approval required"} tone={isResolved ? "green" : "amber"} />
               </div>
 
               <div className="mt-5 space-y-3 text-sm">
@@ -332,12 +283,8 @@ export default function DashboardPage() {
                 <PolicyItem label="Blocked alternative" value="database restart without evidence" />
               </div>
 
-              <button
-                onClick={approve}
-                disabled={loading || !incident?.incident_id || isResolved}
-                className="mt-5 w-full rounded-2xl bg-emerald-300 px-5 py-3 text-sm font-black text-slate-950 hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {isResolved ? "Remediation Approved" : isAwaitingApproval ? "Approve Remediation" : "Approve when ready"}
+              <button onClick={approve} disabled={loading || !incident?.incident_id || isResolved} className="mt-5 w-full rounded-2xl bg-emerald-300 px-5 py-3 text-sm font-black text-slate-950 hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-40">
+                {isResolved ? "Remediation approved" : isAwaitingApproval ? "Approve Remediation" : "Start incident first"}
               </button>
             </section>
 
@@ -353,15 +300,15 @@ export default function DashboardPage() {
           </aside>
         </div>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1fr_1fr]">
           <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
             <h2 className="text-2xl font-black text-white">Live agent timeline</h2>
-            <div className="mt-6 space-y-3">
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
               {timeline.map((item: any, index: number) => (
                 <div key={`${item.agent}-${index}`} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
                   <div>
                     <div className="font-mono text-sm font-black text-cyan-100">{item.agent}</div>
-                    <div className="mt-1 text-xs text-slate-500">step {index + 1} · structured output recorded</div>
+                    <div className="mt-1 text-xs text-slate-500">step {index + 1}</div>
                   </div>
                   <StatusBadge label={item.status || "completed"} tone={toneForStatus(item.status || "completed")} />
                 </div>
@@ -371,16 +318,16 @@ export default function DashboardPage() {
 
           <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
             <h2 className="text-2xl font-black text-white">Outcome and postmortem</h2>
-            <div className="mt-5 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
+            <div className={`mt-5 rounded-3xl border p-5 ${isResolved ? "border-emerald-400/20 bg-emerald-400/10" : "border-white/10 bg-white/[0.035]"}`}>
               <h3 className="font-black text-white">{isResolved ? "Postmortem generated" : "Postmortem preview"}</h3>
               <p className="mt-3 text-sm leading-6 text-slate-300">{postmortemSummary(incident)}</p>
             </div>
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
-              <button className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08]">
+              <button onClick={copyIncidentSummary} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08]">
                 Copy incident summary
               </button>
-              <button className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08]">
+              <button onClick={exportAuditLog} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08]">
                 Export audit log
               </button>
             </div>
@@ -410,9 +357,7 @@ function SystemStripItem({ label, value, tone }: { label: string; value: string;
     <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
       <div className="text-xs uppercase tracking-wider text-slate-500">{label}</div>
       <div className="mt-2 truncate font-mono text-sm text-slate-200">{value}</div>
-      <div className="mt-3">
-        <StatusBadge label={tone} tone={tone} />
-      </div>
+      <div className="mt-3"><StatusBadge label={tone} tone={tone} /></div>
     </div>
   );
 }
