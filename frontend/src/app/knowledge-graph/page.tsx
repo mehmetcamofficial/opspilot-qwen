@@ -83,9 +83,9 @@ const nodes: GraphNode[] = [
     label: "Approval",
     category: "policy",
     owner: "approval_agent",
-    summary: "Operator receives a compact approval package with evidence and rollback safety.",
+    summary: "Operator reviews evidence, policy reason, risk, and rollback plan.",
     evidence: ["Recommended action", "Evidence lineage", "Policy reason", "Rollback plan"],
-    impact: "Creates a human-in-the-loop checkpoint before remediation.",
+    impact: "This is the human-in-the-loop checkpoint before production remediation.",
   },
   {
     id: "remediation",
@@ -138,9 +138,9 @@ const nodePositions: Record<string, NodePosition> = {
   hypothesis: { x: 48, y: 52 },
   policy: { x: 65, y: 34 },
   approval: { x: 65, y: 70 },
-  remediation: { x: 82, y: 52 },
-  recovery: { x: 91, y: 70 },
-  postmortem: { x: 91, y: 90 },
+  remediation: { x: 81, y: 49 },
+  recovery: { x: 90, y: 66 },
+  postmortem: { x: 87, y: 86 },
 };
 
 const lensOptions: { label: string; value: Lens; focus: string; active: string[] }[] = [
@@ -148,7 +148,7 @@ const lensOptions: { label: string; value: Lens; focus: string; active: string[]
     label: "All",
     value: "all",
     focus: "hypothesis",
-    active: nodes.map((node) => node.id),
+    active: [],
   },
   {
     label: "Signals",
@@ -160,31 +160,31 @@ const lensOptions: { label: string; value: Lens; focus: string; active: string[]
     label: "Evidence",
     value: "evidence",
     focus: "metric",
-    active: ["alert", "metric", "logs", "deployment", "hypothesis"],
+    active: ["alert", "metric", "logs", "deployment", "hypothesis", "policy"],
   },
   {
     label: "Reasoning",
     value: "reasoning",
     focus: "hypothesis",
-    active: ["metric", "logs", "deployment", "hypothesis", "policy"],
+    active: ["metric", "logs", "deployment", "hypothesis", "policy", "approval"],
   },
   {
     label: "Policy",
     value: "policy",
     focus: "policy",
-    active: ["hypothesis", "policy", "approval", "remediation"],
+    active: ["hypothesis", "policy", "approval", "remediation", "recovery", "postmortem"],
   },
   {
     label: "Actions",
     value: "action",
     focus: "remediation",
-    active: ["approval", "remediation", "recovery", "postmortem"],
+    active: ["policy", "approval", "remediation", "recovery", "postmortem"],
   },
   {
     label: "Records",
     value: "record",
     focus: "postmortem",
-    active: ["hypothesis", "approval", "remediation", "recovery", "postmortem"],
+    active: ["hypothesis", "policy", "approval", "remediation", "recovery", "postmortem"],
   },
 ];
 
@@ -195,6 +195,22 @@ function categoryTone(category: NodeCategory): Tone {
   if (category === "policy") return "amber";
   if (category === "action") return "cyan";
   return "slate";
+}
+
+function categoryDotClass(category: NodeCategory) {
+  if (category === "signal") return "bg-cyan-300";
+  if (category === "evidence") return "bg-emerald-300";
+  if (category === "reasoning") return "bg-violet-300";
+  if (category === "policy") return "bg-amber-300";
+  if (category === "action") return "bg-sky-300";
+  return "bg-slate-300";
+}
+
+function shortNodeLabel(label: string) {
+  if (label === "Risk Policy") return "Policy";
+  if (label === "Remediation") return "Fix";
+  if (label === "Postmortem") return "Report";
+  return label;
 }
 
 function connectedNodes(startId: string, depth: number) {
@@ -216,24 +232,23 @@ function connectedNodes(startId: string, depth: number) {
   return connected;
 }
 
-function categoryDotClass(category: NodeCategory) {
-  if (category === "signal") return "bg-cyan-300";
-  if (category === "evidence") return "bg-emerald-300";
-  if (category === "reasoning") return "bg-violet-300";
-  if (category === "policy") return "bg-amber-300";
-  if (category === "action") return "bg-sky-300";
-  return "bg-slate-300";
-}
-
-function shortNodeLabel(label: string) {
-  if (label === "Risk Policy") return "Policy";
-  if (label === "Remediation") return "Fix";
-  if (label === "Postmortem") return "Report";
-  return label;
-}
-
 function edgeHasNode(edge: [string, string], nodeId: string) {
   return edge[0] === nodeId || edge[1] === nodeId;
+}
+
+function edgePath(from: NodePosition, to: NodePosition) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.sqrt(dx * dx + dy * dy) || 1;
+
+  const radius = 8.6;
+  const x1 = from.x + (dx / length) * radius;
+  const y1 = from.y + (dy / length) * radius;
+  const x2 = to.x - (dx / length) * radius;
+  const y2 = to.y - (dy / length) * radius;
+
+  const midX = (x1 + x2) / 2;
+  return `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
 }
 
 export default function KnowledgeGraphPage() {
@@ -255,23 +270,44 @@ export default function KnowledgeGraphPage() {
     selectedLens.active.forEach((id) => ids.add(id));
     relationConnected.forEach((id) => ids.add(id));
 
+    const humanTail = ["policy", "approval", "remediation", "recovery", "postmortem"];
+    const selectedIsHumanTail = humanTail.includes(selectedId);
+    const lensNeedsHumanTail = lens === "policy" || lens === "action" || lens === "record";
+    const depthReachedGate = depth >= 3 && (relationConnected.has("policy") || relationConnected.has("approval"));
+
+    if (selectedIsHumanTail || lensNeedsHumanTail || depthReachedGate) {
+      humanTail.forEach((id) => ids.add(id));
+    }
+
+    if (lens === "record") {
+      ["hypothesis", "policy", "approval", "remediation", "recovery", "postmortem"].forEach((id) => ids.add(id));
+    }
+
     return ids;
-  }, [selectedLens, relationConnected]);
+  }, [selectedLens, relationConnected, selectedId, lens, depth]);
 
   const neuralEdges = useMemo(() => {
+    const humanTail = ["policy", "approval", "remediation", "recovery", "postmortem"];
+    const selectedIsHumanTail = humanTail.includes(selectedId);
+    const lensNeedsHumanTail = lens === "policy" || lens === "action" || lens === "record";
+    const depthReachedGate = depth >= 3 && (relationConnected.has("policy") || relationConnected.has("approval"));
+
     return edges.map((edge) => {
       const [from, to] = edge;
       const directToSelected = edgeHasNode(edge, selectedId);
       const inLensPath = selectedLens.active.includes(from) && selectedLens.active.includes(to);
       const inRelationPath = relationConnected.has(from) && relationConnected.has(to);
+      const humanLoopPath = humanTail.includes(from) && humanTail.includes(to);
+      const humanTailActive = humanLoopPath && (selectedIsHumanTail || lensNeedsHumanTail || depthReachedGate);
 
       return {
         edge,
-        active: inLensPath || inRelationPath,
+        active: inLensPath || inRelationPath || humanTailActive,
         direct: directToSelected,
+        humanGate: from === "policy" && to === "approval",
       };
     });
-  }, [selectedId, selectedLens, relationConnected]);
+  }, [selectedId, selectedLens, relationConnected, lens, depth]);
 
   const downstream = edges
     .filter(([from]) => from === selectedId)
@@ -298,8 +334,8 @@ export default function KnowledgeGraphPage() {
           <div>
             <div className="mb-4 flex flex-wrap gap-3">
               <StatusBadge label="Incident Reasoning Graph" tone="cyan" />
+              <StatusBadge label="Human-in-the-loop gate" tone="amber" />
               <StatusBadge label="Neural activation lens" tone="violet" />
-              <StatusBadge label="Evidence lineage" tone="green" />
             </div>
 
             <h1 className="text-4xl font-black text-white md:text-6xl">
@@ -307,16 +343,18 @@ export default function KnowledgeGraphPage() {
             </h1>
 
             <p className="mt-4 max-w-3xl text-slate-400">
-              A neural-style incident map where every lens keeps the whole system visible while activating the nodes and edges relevant to that function.
+              The graph always stays visible. Lens buttons activate different circuits while the human approval gate remains connected to remediation, recovery, and postmortem.
             </p>
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-4">
             <div className="text-xs uppercase tracking-wider text-slate-500">Selected node</div>
             <div className="mt-2 text-2xl font-black text-white">{selectedNode.label}</div>
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               <StatusBadge label={selectedNode.category} tone={categoryTone(selectedNode.category)} />
-              <StatusBadge label={lens} tone="violet" />
+              {lens !== selectedNode.category && (
+                <StatusBadge label={`${selectedLens.label} lens`} tone="violet" />
+              )}
             </div>
           </div>
         </div>
@@ -326,7 +364,7 @@ export default function KnowledgeGraphPage() {
             <div>
               <h2 className="text-xl font-black text-white">Activation controls</h2>
               <p className="mt-1 text-sm text-slate-400">
-                These buttons do not hide the graph. They activate different reasoning functions like a neural system.
+                These controls do not hide nodes. They light up the functional circuit while keeping the full incident brain visible.
               </p>
             </div>
 
@@ -373,15 +411,15 @@ export default function KnowledgeGraphPage() {
           <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-black text-white">Neural reasoning canvas</h2>
+                <h2 className="text-2xl font-black text-white">Human-controlled neural canvas</h2>
                 <p className="mt-1 text-sm text-slate-400">
-                  The full graph remains visible. Lens buttons activate different functional circuits.
+                  Relation depth expands context; connection lines preserve the approval-to-recovery path.
                 </p>
               </div>
               <StatusBadge label={`${nodes.length} nodes`} tone="cyan" />
             </div>
 
-            <div className="relative mt-6 hidden h-[570px] overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_25%_50%,rgba(34,211,238,0.10),transparent_24%),radial-gradient(circle_at_80%_70%,rgba(139,92,246,0.10),transparent_30%)] p-5 md:block">
+            <div className="relative mt-6 hidden h-[610px] overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_25%_50%,rgba(34,211,238,0.10),transparent_24%),radial-gradient(circle_at_80%_70%,rgba(139,92,246,0.10),transparent_30%)] p-5 md:block">
               <div className="absolute left-[7%] top-5 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-black text-cyan-100">
                 signal
               </div>
@@ -392,53 +430,32 @@ export default function KnowledgeGraphPage() {
                 reasoning
               </div>
               <div className="absolute left-[57%] top-5 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-black text-amber-100">
-                policy / approval
+                human approval gate
               </div>
               <div className="absolute right-5 top-5 rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-xs font-black text-sky-100">
                 action / record
               </div>
 
-              <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                  <marker
-                    id="arrow-dim"
-                    markerWidth="7"
-                    markerHeight="7"
-                    refX="6"
-                    refY="3.5"
-                    orient="auto"
-                    markerUnits="strokeWidth"
-                  >
-                    <path d="M 0 0 L 7 3.5 L 0 7 z" fill="rgba(148,163,184,0.26)" />
-                  </marker>
-                  <marker
-                    id="arrow-active"
-                    markerWidth="7"
-                    markerHeight="7"
-                    refX="6"
-                    refY="3.5"
-                    orient="auto"
-                    markerUnits="strokeWidth"
-                  >
-                    <path d="M 0 0 L 7 3.5 L 0 7 z" fill="rgba(34,211,238,0.95)" />
-                  </marker>
-                </defs>
+              <div className="pointer-events-none absolute left-[59.5%] top-[29%] h-[46%] w-[120px] -translate-x-1/2 rounded-[2rem] border border-amber-300/30 bg-amber-300/5 shadow-[0_0_42px_rgba(251,191,36,0.12)]" />
+              <div className="pointer-events-none absolute left-[72%] top-[28%] rounded-2xl border border-amber-300/45 bg-slate-950/90 px-4 py-3 text-xs font-black uppercase tracking-wider text-amber-100 shadow-[0_0_30px_rgba(251,191,36,0.12)]">
+                human review checkpoint
+              </div>
 
-                {neuralEdges.map(({ edge, active, direct }) => {
+              <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+{neuralEdges.map(({ edge, active, direct, humanGate }) => {
                   const [from, to] = edge;
                   const fromPosition = nodePositions[from];
                   const toPosition = nodePositions[to];
-                  const midX = (fromPosition.x + toPosition.x) / 2;
 
                   return (
                     <path
                       key={`${from}-${to}`}
-                      d={`M ${fromPosition.x} ${fromPosition.y} C ${midX} ${fromPosition.y}, ${midX} ${toPosition.y}, ${toPosition.x} ${toPosition.y}`}
+                      d={edgePath(fromPosition, toPosition)}
                       fill="none"
-                      stroke={active ? "rgba(34,211,238,0.88)" : "rgba(148,163,184,0.18)"}
-                      strokeWidth={direct ? 0.75 : active ? 0.5 : 0.24}
-                      strokeDasharray={active ? "0" : "1.2 1.2"}
-                      markerEnd={active ? "url(#arrow-active)" : "url(#arrow-dim)"}
+                      stroke={humanGate ? "rgba(251,191,36,0.94)" : active ? "rgba(34,211,238,0.90)" : "rgba(148,163,184,0.20)"}
+                      strokeWidth={humanGate ? 0.78 : direct ? 0.62 : active ? 0.56 : 0.28}
+                      strokeDasharray={active || humanGate ? "0" : "1.2 1.2"}
+                    strokeLinecap="round"
                     />
                   );
                 })}
@@ -448,6 +465,7 @@ export default function KnowledgeGraphPage() {
                 const position = nodePositions[node.id];
                 const isSelected = node.id === selectedId;
                 const isActive = activatedNodeIds.has(node.id);
+                const isHumanGate = node.id === "approval";
 
                 return (
                   <button
@@ -458,21 +476,26 @@ export default function KnowledgeGraphPage() {
                       top: `${position.y}%`,
                       transform: "translate(-50%, -50%)",
                     }}
-                    className={`absolute flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full border text-center transition duration-300 ${
+                    className={`absolute flex h-[84px] w-[84px] flex-col items-center justify-center rounded-full border text-center transition duration-300 ${
                       isSelected
-                        ? "z-20 border-cyan-300 bg-cyan-300 text-slate-950 shadow-[0_0_42px_rgba(34,211,238,0.34)]"
+                        ? "z-30 border-cyan-300 bg-cyan-300 text-slate-950 shadow-[0_0_48px_rgba(34,211,238,0.36)]"
+                        : isHumanGate
+                        ? "z-20 border-amber-300/80 bg-slate-950 text-amber-50 shadow-[0_0_44px_rgba(251,191,36,0.24)]"
                         : isActive
-                        ? "z-10 border-emerald-400/40 bg-emerald-400/15 text-emerald-50 shadow-[0_0_24px_rgba(16,185,129,0.12)]"
-                        : "z-0 border-white/10 bg-slate-950/90 text-slate-400 opacity-60 hover:opacity-100"
+                        ? "z-20 border-emerald-400/55 bg-slate-950 text-emerald-50 shadow-[0_0_28px_rgba(16,185,129,0.16)]"
+                        : "z-10 border-white/10 bg-slate-950 text-slate-400 opacity-65 hover:opacity-100"
                     }`}
                     title={`${node.label} · ${node.owner}`}
                   >
-                    <span className={`mb-1 h-2 w-2 rounded-full ${categoryDotClass(node.category)} ${isActive ? "animate-pulse" : ""}`} />
-                    <span className="max-w-[64px] truncate text-xs font-black">
+                    {isHumanGate && (
+                      <span className="absolute -inset-2 rounded-full border border-amber-300/20 animate-pulse" />
+                    )}
+                    <span className={`mb-1 h-2.5 w-2.5 rounded-full ${categoryDotClass(node.category)} ${isActive ? "animate-pulse" : ""}`} />
+                    <span className="max-w-[70px] truncate text-[13px] font-black leading-4">
                       {shortNodeLabel(node.label)}
                     </span>
                     <span className={`mt-1 text-[9px] font-black uppercase tracking-wider ${
-                      isSelected ? "text-slate-700" : "text-slate-500"
+                      isSelected ? "text-slate-700" : isHumanGate ? "text-amber-200" : "text-slate-500"
                     }`}>
                       {node.category}
                     </span>
@@ -480,27 +503,27 @@ export default function KnowledgeGraphPage() {
                 );
               })}
 
-              <div className="absolute bottom-5 left-5 rounded-2xl border border-white/10 bg-slate-950/80 p-4 backdrop-blur">
+              <div className="absolute bottom-5 left-5 rounded-2xl border border-white/10 bg-slate-950/85 p-4 backdrop-blur">
                 <div className="text-xs uppercase tracking-wider text-slate-500">selected</div>
                 <div className="mt-1 text-lg font-black text-white">{selectedNode.label}</div>
-                <div className="mt-1 text-xs text-cyan-200">depth {depth} relation highlight</div>
+                <div className="mt-1 text-xs text-cyan-200">relation depth expands nearby context</div>
               </div>
 
-              <div className="absolute bottom-5 right-5 rounded-2xl border border-violet-400/20 bg-violet-400/10 p-4 backdrop-blur">
-                <div className="text-xs uppercase tracking-wider text-violet-200/80">activation lens</div>
-                <div className="mt-1 text-sm font-black text-white">{selectedLens.label} circuit active</div>
+              <div className="absolute bottom-5 left-[55%] w-[260px] -translate-x-1/2 rounded-2xl border border-amber-400/25 bg-slate-950/90 p-4 backdrop-blur">
+                <div className="text-xs uppercase tracking-wider text-amber-200/80">human control</div>
+                <div className="mt-1 text-sm font-black text-white">policy → approval → safe fix</div>
               </div>
             </div>
 
             <div className="mt-5 rounded-3xl border border-violet-400/20 bg-violet-400/10 p-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h3 className="font-black text-white">Neural activation behaviour</h3>
+                  <h3 className="font-black text-white">Human-in-the-loop behaviour</h3>
                   <p className="mt-1 text-sm text-slate-300">
-                    The graph never collapses to one node. It keeps the full incident brain visible and highlights the active reasoning circuit.
+                    Relation depth expands nearby context, while the human approval gate always keeps the downstream remediation → recovery → postmortem path visible.
                   </p>
                 </div>
-                <StatusBadge label={`${selectedLens.label} lens`} tone="cyan" />
+                <StatusBadge label={`${selectedLens.label} circuit`} tone="cyan" />
               </div>
             </div>
 
@@ -613,18 +636,18 @@ export default function KnowledgeGraphPage() {
         <section className="mt-5 grid gap-5 lg:grid-cols-3">
           <InfoPanel
             label="evidence lineage"
-            title="Why this matters"
-            body="The graph makes every recommendation inspectable while still showing the whole incident brain."
+            title="Whole graph remains visible"
+            body="Lens buttons now behave like neural activation circuits, not destructive filters."
           />
           <InfoPanel
-            label="safety"
-            title="Policy-aware automation"
-            body="Policy activation lights up the hypothesis, safety gate, approval, and remediation circuit together."
+            label="human control"
+            title="Approval gate is explicit"
+            body="The policy-to-approval edge is highlighted as the human-in-the-loop checkpoint before remediation."
           />
           <InfoPanel
             label="postmortem"
-            title="Audit-ready memory"
-            body="Records activation keeps the final report connected to recovery, remediation, approval, and reasoning."
+            title="Downstream record remains connected"
+            body="Remediation, recovery, and postmortem stay visible so the graph shows the full operational consequence."
           />
         </section>
       </section>
