@@ -219,14 +219,14 @@ export default function DashboardPage() {
 
   return (
     <PlatformShell>
-      <section className="mx-auto max-w-7xl px-6 pb-16 pt-8">
+      <section className="mx-auto max-w-7xl px-6 pb-12 pt-6">
         {toast && (
           <div className="fixed right-6 top-24 z-[80] rounded-2xl border border-cyan-400/20 bg-slate-950/95 p-4 shadow-[0_0_40px_rgba(34,211,238,0.16)]">
             <div className="text-sm font-bold text-white">{toast}</div>
           </div>
         )}
 
-        <div className="mb-6 rounded-3xl border border-white/10 bg-slate-950/70 p-5">
+        <div className="mb-5 rounded-3xl border border-white/10 bg-slate-950/70 p-5">
           <div className="grid gap-3 md:grid-cols-4">
             <SystemStripItem label="Frontend" value="Vercel / local" tone="green" />
             <SystemStripItem label="Backend" value={backendStatus} tone={backendStatus.startsWith("ok") ? "green" : backendStatus.startsWith("error") ? "amber" : "slate"} />
@@ -235,7 +235,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="mb-4 flex flex-wrap gap-3">
               <StatusBadge label="Command Center" tone="cyan" />
@@ -255,7 +255,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mb-6 rounded-3xl border border-white/10 bg-slate-950/70 p-5">
+        <div className="mb-5 rounded-3xl border border-white/10 bg-slate-950/70 p-5">
           <h2 className="text-xl font-black text-white">Incident state machine</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-7">
             {stateMachine.map((state, index) => {
@@ -282,10 +282,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
-          <div className="space-y-6">
-            <div className="grid items-start gap-6 lg:grid-cols-[0.82fr_1.18fr]">
-              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
+          <div className="space-y-5">
+            <div className="grid items-start gap-5 lg:grid-cols-[0.82fr_1.18fr]">
+              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-black text-white">Incident summary</h2>
@@ -294,7 +294,7 @@ export default function DashboardPage() {
                   <StatusBadge label={status} tone={toneForStatus(status)} />
                 </div>
 
-                <div className="mt-6 grid gap-3 md:grid-cols-2">
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
                   <MetricCard title="Service" value={incident?.triage_result?.affected_service || "checkout-api"} />
                   <MetricCard title="Environment" value="production" />
                   <MetricCard title="Severity" value={incident?.triage_result?.severity || "high"} />
@@ -309,7 +309,7 @@ export default function DashboardPage() {
                 </div>
               </section>
 
-              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-black text-white">Evidence console</h2>
@@ -352,10 +352,10 @@ export default function DashboardPage() {
               </section>
             </div>
 
-            <div className="grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
-              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+            <div className="grid items-start gap-5 lg:grid-cols-[1fr_1fr]">
+              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
                 <h2 className="text-2xl font-black text-white">Live agent timeline</h2>
-                <div className="mt-6 grid gap-3 md:grid-cols-2">
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
                   {timeline.map((item: any, index: number) => (
                     <div key={`${item.agent}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
                       <div className="flex items-start justify-between gap-3">
@@ -381,7 +381,7 @@ export default function DashboardPage() {
                 </div>
               </section>
 
-              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-black text-white">Execution Review</h2>
@@ -423,8 +423,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-28">
-            <section className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-6">
+          <aside className="space-y-5 xl:sticky xl:top-24">
+            <section className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-black text-white">Safety Gate</h2>
@@ -445,7 +445,7 @@ export default function DashboardPage() {
               </button>
             </section>
 
-            <section className="rounded-3xl border border-violet-400/20 bg-violet-400/10 p-6">
+            <section className="rounded-3xl border border-violet-400/20 bg-violet-400/10 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-black text-white">Approval Drawer</h2>
@@ -462,7 +462,7 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+            <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
               <h2 className="text-2xl font-black text-white">Audit trail</h2>
               <div className="mt-5 space-y-3">
                 <AuditItem label="Incident created" value={incident ? "recorded" : "pending"} />
