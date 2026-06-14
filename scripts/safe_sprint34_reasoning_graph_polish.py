@@ -1,3 +1,31 @@
+from pathlib import Path
+import subprocess
+import shutil
+import sys
+
+ROOT = Path(".")
+FRONTEND = ROOT / "frontend"
+PAGE = FRONTEND / "src" / "app" / "knowledge-graph" / "page.tsx"
+BACKUP_DIR = ROOT / "scripts" / "_backups_sprint34_reasoning_graph"
+BACKUP = BACKUP_DIR / "knowledge_graph.page.tsx"
+
+def run_build():
+    return subprocess.run(
+        ["npm", "run", "build"],
+        cwd=FRONTEND,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+if not PAGE.exists():
+    print("ERROR: knowledge-graph/page.tsx not found")
+    sys.exit(1)
+
+BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+shutil.copyfile(PAGE, BACKUP)
+
+PAGE.write_text(r'''
 "use client";
 
 import { useMemo, useState } from "react";
@@ -420,3 +448,16 @@ function InfoPanel({ label, title, body }: { label: string; title: string; body:
     </div>
   );
 }
+'''.strip() + "\n")
+
+print("Sprint 3.4 Incident Reasoning Graph polish applied. Running build check...")
+result = run_build()
+print(result.stdout)
+
+if result.returncode != 0:
+    shutil.copyfile(BACKUP, PAGE)
+    print("BUILD FAILED. Reasoning Graph page restored.")
+    sys.exit(result.returncode)
+
+print("BUILD PASSED. Reasoning Graph polish kept.")
+print(f"Backup stored at {BACKUP}")
