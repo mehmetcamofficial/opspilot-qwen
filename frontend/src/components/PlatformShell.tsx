@@ -82,10 +82,10 @@ export function PlatformShell({ children }: PlatformShellProps) {
   return (
     <main className="min-h-screen overflow-hidden bg-[#030712] text-slate-100 dark:bg-[#030712]">
       <div className="pointer-events-none fixed inset-0">
-        <div className="absolute left-[-10%] top-[-20%] h-[460px] w-[460px] rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute right-[-10%] top-[10%] h-[460px] w-[460px] rounded-full bg-violet-500/20 blur-3xl" />
-        <div className="absolute bottom-[-20%] left-[30%] h-[460px] w-[460px] rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.10),transparent_28%),radial-gradient(circle_at_80%_0%,rgba(139,92,246,0.12),transparent_30%)]" />
+        <div className="absolute left-[-10%] top-[-20%] h-[460px] w-[460px] rounded-full bg-cyan-500/30 blur-3xl" />
+        <div className="absolute right-[-10%] top-[10%] h-[460px] w-[460px] rounded-full bg-blue-500/15 blur-3xl" />
+        <div className="absolute bottom-[-20%] left-[30%] h-[460px] w-[460px] rounded-full bg-blue-500/15 blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.10),transparent_28%),radial-gradient(circle_at_80%_0%,rgba(56,130,246,0.12),transparent_30%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.045)_1px,transparent_1px)] bg-[size:42px_42px]" />
       </div>
 
