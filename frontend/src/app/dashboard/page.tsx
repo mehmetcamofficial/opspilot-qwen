@@ -30,6 +30,48 @@ function normalizeStatus(status?: string) {
   return status.replaceAll("_", " ");
 }
 
+function deriveLifecycleStep(status: string, incident: IncidentState | null) {
+  if (!incident) return 0;
+  if (status === "resolved") return 6;
+  if (status.includes("monitoring")) return 5;
+  if (status.includes("remediating") || status.includes("executed")) return 4;
+  if (status.includes("approval")) return 3;
+  if (status.includes("hypothesis")) return 2;
+  if (status.includes("investigating")) return 1;
+  return 3;
+}
+
+function agentDisplayName(agent?: string) {
+  const labels: Record<string, string> = {
+    triage_agent: "Triage",
+    observability_agent: "Observability",
+    runbook_agent: "Runbook",
+    runbook_retrieval_agent: "Runbook",
+    hypothesis_agent: "Hypothesis",
+    remediation_planner_agent: "Planner",
+    risk_safety_agent: "Safety",
+    approval_agent: "Approval Gate",
+    remediation_executor: "Executor",
+    execution_review_agent: "Execution Review",
+    postmortem_agent: "Postmortem",
+  };
+
+  if (!agent) return "Agent";
+  return labels[agent] || agent.replaceAll("_agent", "").replaceAll("_", " ");
+}
+
+function displayTimelineStatus(agent: string | undefined, status: string | undefined, isResolved: boolean) {
+  if (agent === "approval_agent" && isResolved) return "approved";
+  if (status === "approval_required") return "awaiting approval";
+  if (status === "completed") return "completed";
+  if (status === "executed") return "executed";
+  return status || "completed";
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 function leadingHypothesis(state: IncidentState | null) {
   return state?.hypothesis_result?.ranked_hypotheses?.[0]?.summary || "Cache configuration regression introduced in the latest config change";
 }
@@ -62,11 +104,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [evidenceTab, setEvidenceTab] = useState<EvidenceTab>("metrics");
   const [toast, setToast] = useState<string | null>(null);
+  const [visualStep, setVisualStep] = useState<number | null>(null);
 
   const status = normalizeStatus(incident?.status);
   const timeline = timelineFromState(incident);
   const isResolved = status === "resolved";
   const isAwaitingApproval = status.includes("approval");
+  const lifecycleStep = visualStep ?? deriveLifecycleStep(status, incident);
 
   function notify(message: string) {
     setToast(message);
@@ -89,12 +133,24 @@ export default function DashboardPage() {
 
   async function startIncident() {
     setLoading(true);
+    setVisualStep(0);
     try {
+      await sleep(300);
+      setVisualStep(1);
+
+      await sleep(300);
+      setVisualStep(2);
+
       const data = await createIncident();
       setIncident(data.state ?? data);
-      notify("Demo incident started. Safety gate is waiting for approval.");
+
+      await sleep(300);
+      setVisualStep(3);
+
+      notify("Investigation completed. Safety gate is waiting for human approval.");
     } catch (error: any) {
       alert(error.message);
+      setVisualStep(null);
     } finally {
       setLoading(false);
     }
@@ -120,12 +176,20 @@ export default function DashboardPage() {
     }
 
     setLoading(true);
+    setVisualStep(4);
     try {
+      await sleep(450);
+      setVisualStep(5);
+
       const data = await approveIncident(incident.incident_id);
+
+      await sleep(450);
       setIncident(data.state ?? data);
+      setVisualStep(6);
       notify("Remediation approved. Execution review and postmortem generated.");
     } catch (error: any) {
       alert(error.message);
+      setVisualStep(deriveLifecycleStep(status, incident));
     } finally {
       setLoading(false);
     }
@@ -195,78 +259,171 @@ export default function DashboardPage() {
           <h2 className="text-xl font-black text-white">Incident state machine</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-7">
             {stateMachine.map((state, index) => {
-              const active = status === state || (status === "standby" && index === 0);
-              const passed = Boolean(incident) && index <= 3;
+              const active = index === lifecycleStep;
+              const passed = Boolean(incident) && index < lifecycleStep;
               return (
-                <div key={state} className={`rounded-2xl border p-3 ${active ? "border-cyan-300 bg-cyan-300 text-slate-950" : passed ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-100" : "border-white/10 bg-white/[0.035] text-slate-400"}`}>
+                <div
+                  key={state}
+                  className={`rounded-2xl border p-3 transition-all duration-300 ${
+                    active
+                      ? "border-cyan-300 bg-cyan-300 text-slate-950 shadow-[0_0_28px_rgba(34,211,238,0.22)]"
+                      : passed
+                      ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
+                      : "border-white/10 bg-white/[0.035] text-slate-400"
+                  }`}
+                >
                   <div className="text-xs font-black uppercase tracking-wider">Step {index + 1}</div>
-                  <div className="mt-1 text-sm font-black">{state}</div>
+                  <div className="mt-1 text-sm font-black">
+                    {state === "awaiting approval" ? "approval gate" : state}
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="grid items-start gap-6 xl:grid-cols-[0.9fr_1.15fr_0.95fr]">
-          <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-black text-white">Incident summary</h2>
-                <p className="mt-1 font-mono text-sm text-slate-500">{incident?.incident_id || "No active incident yet"}</p>
-              </div>
-              <StatusBadge label={status} tone={toneForStatus(status)} />
-            </div>
-
-            <div className="mt-6 grid gap-3 md:grid-cols-2">
-              <MetricCard title="Service" value={incident?.triage_result?.affected_service || "checkout-api"} />
-              <MetricCard title="Environment" value="production" />
-              <MetricCard title="Severity" value={incident?.triage_result?.severity || "high"} />
-              <MetricCard title="Business impact" value="checkout degraded" />
-              <MetricCard title="Confidence" value={String(incident?.hypothesis_result?.confidence || "0.86")} />
-              <MetricCard title="Risk" value={incident?.risk_review?.risk_level || "medium"} />
-            </div>
-
-            <div className="mt-6 rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-5">
-              <h3 className="text-xl font-black text-white">Leading hypothesis</h3>
-              <p className="mt-3 leading-7 text-slate-300">{leadingHypothesis(incident)}</p>
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-black text-white">Evidence console</h2>
-                <p className="mt-1 text-sm text-slate-400">Evidence lineage behind the recommendation.</p>
-              </div>
-              <StatusBadge label="traceable" tone="green" />
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              {(["metrics", "logs", "deployments", "runbooks"] as EvidenceTab[]).map((tab) => (
-                <button key={tab} onClick={() => setEvidenceTab(tab)} className={`rounded-full border px-4 py-2 text-sm font-bold ${evidenceTab === tab ? "border-cyan-300 bg-cyan-300 text-slate-950" : "border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"}`}>
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {defaultEvidence[evidenceTab].map((item, index) => (
-                <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                  <div className="text-xs font-black uppercase tracking-wider text-cyan-300">source {index + 1}</div>
-                  <div className="mt-2 text-sm leading-6 text-slate-300">{item}</div>
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
+          <div className="space-y-6">
+            <div className="grid items-start gap-6 lg:grid-cols-[0.82fr_1.18fr]">
+              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-white">Incident summary</h2>
+                    <p className="mt-1 font-mono text-sm text-slate-500">{incident?.incident_id || "No active incident yet"}</p>
+                  </div>
+                  <StatusBadge label={status} tone={toneForStatus(status)} />
                 </div>
-              ))}
+
+                <div className="mt-6 grid gap-3 md:grid-cols-2">
+                  <MetricCard title="Service" value={incident?.triage_result?.affected_service || "checkout-api"} />
+                  <MetricCard title="Environment" value="production" />
+                  <MetricCard title="Severity" value={incident?.triage_result?.severity || "high"} />
+                  <MetricCard title="Business impact" value="checkout degraded" />
+                  <MetricCard title="Confidence" value={String(incident?.hypothesis_result?.confidence || "0.86")} />
+                  <MetricCard title="Risk" value={incident?.risk_review?.risk_level || "medium"} />
+                </div>
+
+                <div className="mt-6 rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-5">
+                  <h3 className="text-xl font-black text-white">Leading hypothesis</h3>
+                  <p className="mt-3 leading-7 text-slate-300">{leadingHypothesis(incident)}</p>
+                </div>
+              </section>
+
+              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-white">Evidence console</h2>
+                    <p className="mt-1 text-sm text-slate-400">Evidence lineage behind the recommendation.</p>
+                  </div>
+                  <StatusBadge label="traceable" tone="green" />
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {(["metrics", "logs", "deployments", "runbooks"] as EvidenceTab[]).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setEvidenceTab(tab)}
+                      className={`rounded-full border px-4 py-2 text-sm font-bold ${
+                        evidenceTab === tab
+                          ? "border-cyan-300 bg-cyan-300 text-slate-950"
+                          : "border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-5 grid gap-3">
+                  {defaultEvidence[evidenceTab].map((item, index) => (
+                    <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                      <div className="text-xs font-black uppercase tracking-wider text-cyan-300">source {index + 1}</div>
+                      <div className="mt-2 text-sm leading-6 text-slate-300">{item}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 rounded-3xl border border-violet-400/20 bg-violet-400/10 p-5">
+                  <h3 className="font-black text-white">Why multi-agent?</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    Each agent owns one decision boundary: triage, evidence, hypothesis, risk, approval, execution review, and postmortem.
+                  </p>
+                </div>
+              </section>
             </div>
 
-            <div className="mt-5 rounded-3xl border border-violet-400/20 bg-violet-400/10 p-5">
-              <h3 className="font-black text-white">Why multi-agent?</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-300">
-                Each agent owns one decision boundary: triage, evidence, hypothesis, risk, approval, execution review, and postmortem.
-              </p>
-            </div>
-          </section>
+            <div className="grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
+              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+                <h2 className="text-2xl font-black text-white">Live agent timeline</h2>
+                <div className="mt-6 grid gap-3 md:grid-cols-2">
+                  {timeline.map((item: any, index: number) => (
+                    <div key={`${item.agent}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div title={item.agent} className="text-sm font-black leading-5 text-cyan-100">
+                            {agentDisplayName(item.agent)}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">Agent step {index + 1}</div>
+                        </div>
+                        <div className="shrink-0 rounded-full border border-white/10 bg-slate-950/50 px-2.5 py-1 text-xs font-black text-slate-400">
+                          {index + 1}
+                        </div>
+                      </div>
 
-          <aside className="space-y-6">
+                      <div className="mt-3">
+                        <StatusBadge
+                          label={displayTimelineStatus(item.agent, item.status, isResolved)}
+                          tone={toneForStatus(displayTimelineStatus(item.agent, item.status, isResolved))}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-white">Execution Review</h2>
+                    <p className="mt-1 text-sm text-slate-400">What happened after approval and how the platform verified recovery.</p>
+                  </div>
+                  <StatusBadge label={isResolved ? "verified" : "pending"} tone={isResolved ? "green" : "amber"} />
+                </div>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  <MiniReview label="Action" value={isResolved ? "Rollback executed" : "Waiting approval"} />
+                  <MiniReview label="Validation" value={isResolved ? "Latency recovered" : "Not started"} />
+                  <MiniReview label="Risk" value={isResolved ? "Reduced" : "Medium"} />
+                </div>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  <MiniReview label="p95 latency" value={isResolved ? "2.8s → 480ms" : "2.8s"} />
+                  <MiniReview label="Cache hit ratio" value={isResolved ? "41% → 89%" : "41%"} />
+                </div>
+
+                <div className={`mt-5 rounded-3xl border p-5 ${isResolved ? "border-emerald-400/20 bg-emerald-400/10" : "border-white/10 bg-white/[0.035]"}`}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="font-black text-white">{isResolved ? "Postmortem generated" : "Postmortem preview"}</h3>
+                      <p className="mt-3 text-sm leading-6 text-slate-300">{postmortemSummary(incident)}</p>
+                    </div>
+                    <StatusBadge label={isResolved ? "final" : "draft"} tone={isResolved ? "green" : "slate"} />
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  <button onClick={copyIncidentSummary} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08]">
+                    Copy incident summary
+                  </button>
+                  <button onClick={exportAuditLog} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08]">
+                    Export audit log
+                  </button>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <aside className="space-y-6 xl:sticky xl:top-28">
             <section className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -315,58 +472,6 @@ export default function DashboardPage() {
               </div>
             </section>
           </aside>
-        </div>
-
-        <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1fr_1fr]">
-          <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-            <h2 className="text-2xl font-black text-white">Live agent timeline</h2>
-            <div className="mt-6 grid gap-3 md:grid-cols-2">
-              {timeline.map((item: any, index: number) => (
-                <div key={`${item.agent}-${index}`} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                  <div>
-                    <div className="font-mono text-sm font-black text-cyan-100">{item.agent}</div>
-                    <div className="mt-1 text-xs text-slate-500">step {index + 1}</div>
-                  </div>
-                  <StatusBadge label={item.status || "completed"} tone={toneForStatus(item.status || "completed")} />
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-black text-white">Execution Review</h2>
-                <p className="mt-1 text-sm text-slate-400">What happened after approval and how the platform verified recovery.</p>
-              </div>
-              <StatusBadge label={isResolved ? "verified" : "pending"} tone={isResolved ? "green" : "amber"} />
-            </div>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
-              <MiniReview label="Action" value={isResolved ? "Rollback executed" : "Waiting approval"} />
-              <MiniReview label="Validation" value={isResolved ? "Latency recovered" : "Not started"} />
-              <MiniReview label="Risk" value={isResolved ? "Reduced" : "Medium"} />
-            </div>
-
-            <div className={`mt-5 rounded-3xl border p-5 ${isResolved ? "border-emerald-400/20 bg-emerald-400/10" : "border-white/10 bg-white/[0.035]"}`}>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-black text-white">{isResolved ? "Postmortem generated" : "Postmortem preview"}</h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-300">{postmortemSummary(incident)}</p>
-                </div>
-                <StatusBadge label={isResolved ? "final" : "draft"} tone={isResolved ? "green" : "slate"} />
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              <button onClick={copyIncidentSummary} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08]">
-                Copy incident summary
-              </button>
-              <button onClick={exportAuditLog} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white hover:bg-white/[0.08]">
-                Export audit log
-              </button>
-            </div>
-          </section>
         </div>
 
         {incidents.length > 0 && (
