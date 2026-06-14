@@ -1,3 +1,31 @@
+from pathlib import Path
+import subprocess
+import shutil
+import sys
+
+ROOT = Path(".")
+FRONTEND = ROOT / "frontend"
+SIMULATION = FRONTEND / "src" / "app" / "simulation" / "page.tsx"
+BACKUP_DIR = ROOT / "scripts" / "_backups_sprint31_simulation_mission_control"
+BACKUP = BACKUP_DIR / "simulation.page.tsx"
+
+def run_build():
+    return subprocess.run(
+        ["npm", "run", "build"],
+        cwd=FRONTEND,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+if not SIMULATION.exists():
+    print("ERROR: simulation/page.tsx not found")
+    sys.exit(1)
+
+BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+shutil.copyfile(SIMULATION, BACKUP)
+
+SIMULATION.write_text(r'''
 "use client";
 
 import { useMemo, useState } from "react";
@@ -507,3 +535,16 @@ function DecisionLine({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+'''.strip() + "\n")
+
+print("Sprint 3.1 simulation mission-control polish applied. Running build check...")
+result = run_build()
+print(result.stdout)
+
+if result.returncode != 0:
+    shutil.copyfile(BACKUP, SIMULATION)
+    print("BUILD FAILED. Simulation page restored.")
+    sys.exit(result.returncode)
+
+print("BUILD PASSED. Simulation polish kept.")
+print(f"Backup stored at {BACKUP}")
