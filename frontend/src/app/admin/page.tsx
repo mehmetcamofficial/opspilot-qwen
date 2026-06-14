@@ -305,7 +305,7 @@ export default function AdminPage() {
 
   return (
     <PlatformShell>
-      <section className="mx-auto max-w-7xl px-6 pb-20 pt-10">
+      <section className="mx-auto max-w-7xl px-6 pb-16 pt-8">
         {toast && (
           <div className="fixed right-6 top-24 z-[80] rounded-2xl border border-cyan-400/20 bg-slate-950/95 p-4 shadow-[0_0_40px_rgba(34,211,238,0.16)]">
             <StatusBadge label={toast.tone} tone={toast.tone} />
@@ -596,6 +596,53 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+
+            <div className="mt-6 rounded-3xl border border-violet-400/20 bg-violet-400/10 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-black text-white">Policy enforcement preview</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Shows how the current policy set would handle common production actions before they reach the Command Center.
+                  </p>
+                </div>
+                <StatusBadge label="live local state" tone="cyan" />
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                <MiniState
+                  label="Approval-gated rules"
+                  value={String(state.policies.filter((policy) => policy.action === "approval_required" && policy.enabled && !policy.archived).length)}
+                />
+                <MiniState
+                  label="Blocked rules"
+                  value={String(state.policies.filter((policy) => policy.action === "block" && policy.enabled && !policy.archived).length)}
+                />
+                <MiniState
+                  label="Allowed rules"
+                  value={String(state.policies.filter((policy) => policy.action === "allow" && policy.enabled && !policy.archived).length)}
+                />
+                <MiniState
+                  label="Archived policies"
+                  value={String(state.policies.filter((policy) => policy.archived).length)}
+                />
+              </div>
+
+              <div className="mt-5 space-y-3">
+                <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                  <div className="text-xs uppercase tracking-wider text-slate-500">Production rollback</div>
+                  <div className="mt-2 font-black text-white">Requires human approval before execution</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                  <div className="text-xs uppercase tracking-wider text-slate-500">Database restart without evidence</div>
+                  <div className="mt-2 font-black text-white">Blocked by safety policy</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                  <div className="text-xs uppercase tracking-wider text-slate-500">Low-risk validation</div>
+                  <div className="mt-2 font-black text-white">Allowed with audit logging</div>
+                </div>
+              </div>
+            </div>
+
           </section>
         </div>
 
