@@ -116,8 +116,18 @@ function freshState(): GovernanceState {
       { id: "prod-url", label: "Production backend URL connected", ready: false },
     ],
     auditLog: [
-      createLog("Governance console initialized"),
-      createLog("Mock Qwen mode selected to avoid pay-as-you-go usage"),
+      {
+        id: "audit-initialized",
+        actor: "system",
+        message: "Governance console initialized",
+        timestamp: "initial state",
+      },
+      {
+        id: "audit-mock-mode",
+        actor: "system",
+        message: "Mock Qwen mode selected to avoid pay-as-you-go usage",
+        timestamp: "initial state",
+      },
     ],
   };
 }
