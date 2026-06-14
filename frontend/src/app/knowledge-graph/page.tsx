@@ -413,7 +413,7 @@ export default function KnowledgeGraphPage() {
               <div>
                 <h2 className="text-2xl font-black text-white">Human-controlled neural canvas</h2>
                 <p className="mt-1 text-sm text-slate-400">
-                  Relation depth expands context; connection lines preserve the approval-to-recovery path.
+                  Investigating: checkout API latency after a cache configuration change. Active path: deployment context → metric anomaly → hypothesis → approval gate.
                 </p>
               </div>
               <StatusBadge label={`${nodes.length} nodes`} tone="cyan" />
