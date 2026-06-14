@@ -1,3 +1,31 @@
+from pathlib import Path
+import subprocess
+import shutil
+import sys
+
+ROOT = Path(".")
+FRONTEND = ROOT / "frontend"
+LANDING = FRONTEND / "src" / "app" / "page.tsx"
+BACKUP_DIR = ROOT / "scripts" / "_backups_sprint33_landing_4pillar"
+BACKUP = BACKUP_DIR / "page.tsx"
+
+def run_build():
+    return subprocess.run(
+        ["npm", "run", "build"],
+        cwd=FRONTEND,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+if not LANDING.exists():
+    print("ERROR: frontend/src/app/page.tsx not found")
+    sys.exit(1)
+
+BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+shutil.copyfile(LANDING, BACKUP)
+
+LANDING.write_text(r'''
 "use client";
 
 import Link from "next/link";
@@ -277,3 +305,16 @@ function InfoPanel({ title, label, body }: { title: string; label: string; body:
     </div>
   );
 }
+'''.strip() + "\n")
+
+print("Sprint 3.3 landing 4-pillar polish applied. Running build check...")
+result = run_build()
+print(result.stdout)
+
+if result.returncode != 0:
+    shutil.copyfile(BACKUP, LANDING)
+    print("BUILD FAILED. Landing page restored.")
+    sys.exit(result.returncode)
+
+print("BUILD PASSED. Landing polish kept.")
+print(f"Backup stored at {BACKUP}")
