@@ -1,3 +1,48 @@
+from pathlib import Path
+import subprocess
+import shutil
+import sys
+
+ROOT = Path(".")
+FRONTEND = ROOT / "frontend"
+SRC = FRONTEND / "src"
+BACKUP_DIR = ROOT / "scripts" / "_backups_sprint21_governance"
+
+FILES = [
+    SRC / "app" / "admin" / "page.tsx",
+]
+
+def write(path, content):
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(content.strip() + "\n")
+
+def backup():
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    for file in FILES:
+        if file.exists():
+            target = BACKUP_DIR / str(file).replace("/", "__")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(file, target)
+
+def restore():
+    for file in FILES:
+        target = BACKUP_DIR / str(file).replace("/", "__")
+        if target.exists():
+            shutil.copyfile(target, file)
+
+def run_build():
+    return subprocess.run(
+        ["npm", "run", "build"],
+        cwd=FRONTEND,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+backup()
+
+write(SRC / "app" / "admin" / "page.tsx", r'''
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -804,3 +849,16 @@ function ControlStat({ title, value, tone }: { title: string; value: string; ton
     </div>
   );
 }
+''')
+
+print("Sprint 2.1 Governance Control Center patch applied. Running build check...")
+result = run_build()
+print(result.stdout)
+
+if result.returncode != 0:
+    restore()
+    print("BUILD FAILED. Sprint 2.1 changes were rolled back.")
+    sys.exit(result.returncode)
+
+print("BUILD PASSED. Sprint 2.1 changes kept.")
+print(f"Backups stored in {BACKUP_DIR}")
