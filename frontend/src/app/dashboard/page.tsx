@@ -219,6 +219,38 @@ export default function DashboardPage() {
 
   return (
     <PlatformShell>
+      {/* demo-hardening-banner */}
+      <section className="mx-auto mb-8 max-w-7xl rounded-[1.5rem] border border-cyan-400/15 bg-slate-950/70 p-4 shadow-[0_0_32px_rgba(34,211,238,0.06)]">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-cyan-100">
+                Demo Mode
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-bold text-slate-300">
+                Frontend: Vercel
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-bold text-slate-300">
+                Backend: Local FastAPI
+              </span>
+              <span className="rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1 text-[11px] font-bold text-violet-100">
+                Qwen-ready / mock-safe
+              </span>
+            </div>
+            <p className="mt-2 max-w-5xl text-xs leading-5 text-slate-400">
+              Live preview is deployed on Vercel. The interactive Command Center can run with a local FastAPI backend, while Qwen-compatible orchestration is demonstrated through a safe mock fallback.
+            </p>
+          </div>
+
+          <a
+            href="/simulation"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-3 py-2 text-xs font-black text-cyan-50 transition hover:bg-cyan-300/20"
+          >
+            Run safe simulation →
+          </a>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-7xl px-6 pb-12 pt-6">
         {toast && (
           <div className="fixed right-6 top-24 z-[80] rounded-2xl border border-cyan-400/20 bg-slate-950/95 p-4 shadow-[0_0_40px_rgba(34,211,238,0.16)]">
