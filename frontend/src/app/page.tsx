@@ -81,7 +81,24 @@ export default function Home() {
 
   return (
     <PlatformShell>
-      <section className="mx-auto max-w-7xl px-6 pb-16 pt-10">
+      <section className="mx-auto max-w-7xl px-6 pb-16 pt-10 relative overflow-hidden">
+      {/* landing-video-background-layer */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <video
+          className="absolute inset-0 h-full w-full object-cover opacity-[0.34]"
+          src="/opspilot-ambient-bg.webm"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_28%,rgba(34,211,238,0.18),transparent_34%),radial-gradient(circle_at_86%_18%,rgba(167,139,250,0.18),transparent_36%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(2,6,23,0.30),rgba(2,6,23,0.54)_48%,rgba(2,6,23,0.68))]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(2,6,23,0.04),rgba(2,6,23,0.62)_72%,rgba(2,6,23,0.86))]" />
+      </div>
+
         <div className="grid min-h-[620px] items-center gap-10 lg:grid-cols-[1.02fr_0.98fr]">
           <div>
             <div className="mb-5 flex flex-wrap gap-3">
