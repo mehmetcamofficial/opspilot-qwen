@@ -151,6 +151,52 @@ export default function Home() {
             </div>
           </div>
 
+          <section className="mt-10 rounded-[2rem] border border-white/10 bg-slate-950/65 p-6 shadow-[0_0_40px_rgba(34,211,238,0.08)] lg:col-span-2">
+            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-6">
+                <StatusBadge label="Why / How / What" tone="cyan" />
+                <h2 className="mt-5 text-3xl font-black text-white">Why OpsPilot is the safer way to fix critical incidents.</h2>
+                <p className="mt-4 text-sm leading-7 text-slate-400">
+                  Agents surface the right evidence, keep decision-making transparent, and move teams from reactive firefighting to controlled recovery.
+                </p>
+
+                <div className="mt-8 grid gap-4 md:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                    <div className="text-xs uppercase tracking-wider text-slate-500">Why</div>
+                    <div className="mt-3 font-black text-white">Reduce incident noise.</div>
+                    <p className="mt-2 text-sm text-slate-400">Turn scattered alerts into a prioritized, evidence-backed command path.</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                    <div className="text-xs uppercase tracking-wider text-slate-500">How</div>
+                    <div className="mt-3 font-black text-white">AI agents gather and score context.</div>
+                    <p className="mt-2 text-sm text-slate-400">Qwen-powered agents correlate metrics, logs, deployment data, and runbooks automatically.</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                    <div className="text-xs uppercase tracking-wider text-slate-500">What</div>
+                    <div className="mt-3 font-black text-white">A trusted recovery workflow.</div>
+                    <p className="mt-2 text-sm text-slate-400">Human approval stays central while the system documents every step and decision.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+                <StatusBadge label="Before vs After OpsPilot" tone="violet" />
+                <h2 className="mt-5 text-3xl font-black text-white">From chaotic remediation to structured incident command.</h2>
+
+                <div className="mt-8 space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <ValuePair heading="Manual triage" before="Slow, inconsistent decisions" after="Fast, evidence-backed actions" />
+                    <ValuePair heading="Slack chaos" before="Scattered chat threads" after="Clear command flow" />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <ValuePair heading="Missing audit trail" before="Unclear postmortem" after="Full reasoning log" />
+                    <ValuePair heading="Risky fixes" before="Unsafe manual rollback" after="Human-approved remediation" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <div className="rounded-[2rem] border border-cyan-400/20 bg-slate-950/75 p-6 shadow-[0_0_80px_rgba(34,211,238,0.12)]">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -291,6 +337,22 @@ function InfoPanel({ title, label, body }: { title: string; label: string; body:
       <StatusBadge label={label} tone="violet" />
       <h3 className="mt-4 text-2xl font-black text-white">{title}</h3>
       <p className="mt-3 text-sm leading-7 text-slate-400">{body}</p>
+    </div>
+  );
+}
+
+function ValuePair({ heading, before, after }: { heading: string; before: string; after: string }) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+      <div className="text-xs uppercase tracking-wider text-slate-500">{heading}</div>
+      <div className="mt-4 flex items-start gap-3 text-sm text-slate-300">
+        <div className="min-w-[8rem] font-black text-white">Before</div>
+        <div>{before}</div>
+      </div>
+      <div className="mt-3 flex items-start gap-3 text-sm text-slate-300">
+        <div className="min-w-[8rem] font-black text-white">After</div>
+        <div>{after}</div>
+      </div>
     </div>
   );
 }
