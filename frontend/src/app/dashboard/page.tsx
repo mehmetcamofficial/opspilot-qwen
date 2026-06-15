@@ -104,6 +104,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [evidenceTab, setEvidenceTab] = useState<EvidenceTab>("metrics");
   const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [visualStep, setVisualStep] = useState<number | null>(null);
 
   const status = normalizeStatus(incident?.status);
@@ -117,15 +118,29 @@ export default function DashboardPage() {
     window.setTimeout(() => setToast(null), 2200);
   }
 
+  function showError(message: string) {
+    setError(message);
+    window.setTimeout(() => setError(null), 5000);
+  }
+
+  function extractErrorMessage(error: unknown, fallback: string) {
+    if (error instanceof Error) return error.message;
+    if (typeof error === "string") return error;
+    return fallback;
+  }
+
   async function checkBackend() {
     setLoading(true);
+    setError(null);
     try {
       const data = await healthcheck();
       setBackendStatus(`${data.status} | mock_llm=${data.mock_llm}`);
       notify("Backend healthcheck completed.");
-    } catch (error: any) {
-      setBackendStatus(`error: ${error.message}`);
-      notify("Backend check failed. Start FastAPI backend first.");
+    } catch (error: unknown) {
+      const errorMsg = extractErrorMessage(error, "Backend check failed. Start FastAPI backend first.");
+      setBackendStatus(`error: ${extractErrorMessage(error, "unknown")}`);
+      showError(errorMsg);
+      console.error("Backend check error:", error);
     } finally {
       setLoading(false);
     }
@@ -133,6 +148,7 @@ export default function DashboardPage() {
 
   async function startIncident() {
     setLoading(true);
+    setError(null);
     setVisualStep(0);
     try {
       await sleep(300);
@@ -148,8 +164,10 @@ export default function DashboardPage() {
       setVisualStep(3);
 
       notify("Investigation completed. Safety gate is waiting for human approval.");
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error: unknown) {
+      const errorMsg = extractErrorMessage(error, "Failed to start incident. Check backend logs for details.");
+      showError(errorMsg);
+      console.error("Start incident error:", error);
       setVisualStep(null);
     } finally {
       setLoading(false);
@@ -158,12 +176,15 @@ export default function DashboardPage() {
 
   async function refreshIncidents() {
     setLoading(true);
+    setError(null);
     try {
       const data = await listIncidents();
       setIncidents(data.incidents || []);
       notify("Stored incidents refreshed.");
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error: unknown) {
+      const errorMsg = extractErrorMessage(error, "Failed to refresh incidents.");
+      showError(errorMsg);
+      console.error("Refresh incidents error:", error);
     } finally {
       setLoading(false);
     }
@@ -176,6 +197,7 @@ export default function DashboardPage() {
     }
 
     setLoading(true);
+    setError(null);
     setVisualStep(4);
     try {
       await sleep(450);
@@ -187,8 +209,10 @@ export default function DashboardPage() {
       setIncident(data.state ?? data);
       setVisualStep(6);
       notify("Remediation approved. Execution review and postmortem generated.");
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error: unknown) {
+      const errorMsg = extractErrorMessage(error, "Failed to approve incident remediation.");
+      showError(errorMsg);
+      console.error("Approve error:", error);
       setVisualStep(deriveLifecycleStep(status, incident));
     } finally {
       setLoading(false);
@@ -255,6 +279,24 @@ export default function DashboardPage() {
         {toast && (
           <div className="fixed right-6 top-24 z-[80] rounded-2xl border border-cyan-400/20 bg-slate-950/95 p-4 shadow-[0_0_40px_rgba(34,211,238,0.16)]">
             <div className="text-sm font-bold text-white">{toast}</div>
+          </div>
+        )}
+
+        {error && (
+          <div className="fixed right-6 top-40 z-[80] rounded-2xl border border-red-400/30 bg-red-950/95 p-4 shadow-[0_0_40px_rgba(239,68,68,0.16)]">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase tracking-wider text-red-300">Error</div>
+                <div className="mt-1 text-sm text-red-100">{error}</div>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="shrink-0 text-red-300 hover:text-red-200"
+                aria-label="Close error"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
 
