@@ -5,7 +5,34 @@ import { PlatformShell } from "@/components/PlatformShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { approveIncident, createIncident, healthcheck, listIncidents } from "@/lib/api";
 
-type IncidentState = any;
+type TimelineItem = {
+  agent: string;
+  status?: string;
+};
+
+type IncidentState = {
+  incident_id?: string;
+  status?: string;
+  triage_result?: {
+    affected_service?: string;
+    severity?: string;
+  };
+  hypothesis_result?: {
+    confidence?: number;
+    ranked_hypotheses?: Array<{ summary?: string }>;
+  };
+  risk_review?: {
+    risk_level?: string;
+  };
+  remediation_plan?: {
+    candidate_actions?: Array<{ title?: string }>;
+  };
+  postmortem?: {
+    summary?: string;
+  };
+  agent_timeline?: TimelineItem[];
+};
+
 type EvidenceTab = "metrics" | "logs" | "deployments" | "runbooks";
 
 const stateMachine = ["triaging", "investigating", "hypothesis", "awaiting approval", "remediating", "monitoring", "resolved"];
@@ -232,7 +259,7 @@ export default function DashboardPage() {
   }
 
   async function exportAuditLog() {
-    const audit = timeline.map((item: any, index: number) => ({
+    const audit = timeline.map((item: TimelineItem, index: number) => ({
       step: index + 1,
       agent: item.agent,
       status: item.status || "completed",
@@ -430,7 +457,7 @@ export default function DashboardPage() {
               <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
                 <h2 className="text-2xl font-black text-white">Live agent timeline</h2>
                 <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  {timeline.map((item: any, index: number) => (
+                  {timeline.map((item: TimelineItem, index: number) => (
                     <div key={`${item.agent}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -552,7 +579,7 @@ export default function DashboardPage() {
           <section className="mt-6 rounded-3xl border border-white/10 bg-slate-950/70 p-6">
             <h2 className="text-2xl font-black text-white">Stored incidents</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              {incidents.map((item: any) => (
+              {incidents.map((item: IncidentState) => (
                 <div key={item.incident_id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
                   <div className="font-mono text-sm font-black text-cyan-100">{item.incident_id}</div>
                   <div className="mt-2 text-sm text-slate-400">Status: {item.status}</div>
