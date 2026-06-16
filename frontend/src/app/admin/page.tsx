@@ -472,7 +472,7 @@ export default function AdminPage() {
         <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
             <h2 className="text-2xl font-black text-white">Agent registry control</h2>
-            <p className="mt-2 text-sm text-slate-400">Enable, disable, add, or remove agents from the demo registry.</p>
+            <p className="mt-2 text-sm text-slate-400">Enable, disable, add, or remove agents from the agent registry.</p>
 
             <div className="mt-6 grid gap-3 md:grid-cols-[0.75fr_1fr_auto]">
               <input value={newAgentId} onChange={(event) => setNewAgentId(event.target.value)} placeholder="agent_id" className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300" />
@@ -722,7 +722,7 @@ export default function AdminPage() {
 
           <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
             <h2 className="text-2xl font-black text-white">Governance audit log</h2>
-            <p className="mt-2 text-sm text-slate-400">Every control action is recorded locally for demo traceability.</p>
+            <p className="mt-2 text-sm text-slate-400">Every control action is recorded locally for traceability.</p>
 
             <div className="mt-6 space-y-3">
               {state.auditLog.map((event) => (

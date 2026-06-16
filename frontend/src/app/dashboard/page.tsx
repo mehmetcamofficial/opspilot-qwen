@@ -276,7 +276,7 @@ export default function DashboardPage() {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-cyan-100">
-                Demo Mode
+                Operational Mode
               </span>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-bold text-slate-300">
                 Frontend: Vercel
@@ -289,7 +289,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <p className="mt-2 max-w-5xl text-xs leading-5 text-slate-400">
-              Live preview is deployed on Vercel. The interactive Command Center can run with a local FastAPI backend, while Qwen-compatible orchestration is demonstrated through a safe mock fallback.
+              Live preview is deployed on Vercel. The interactive Command Center can run with a local FastAPI backend, while Qwen-compatible orchestration is shown through a safe mock fallback.
             </p>
           </div>
 

@@ -1,21 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const storageKey = "opspilot-language";
+
+function getLanguageSnapshot() {
+  if (typeof window === "undefined") {
+    return "EN" as const;
+  }
+
+  const stored = window.localStorage.getItem(storageKey);
+  return stored === "TR" ? "TR" : "EN";
+}
+
+function subscribe(callback: () => void) {
+  window.addEventListener("opspilot-language-change", callback);
+  window.addEventListener("storage", callback);
+
+  return () => {
+    window.removeEventListener("opspilot-language-change", callback);
+    window.removeEventListener("storage", callback);
+  };
+}
 
 export function LanguageToggle() {
-  const [language, setLanguage] = useState<"EN" | "TR">("EN");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("opspilot-language");
-    if (stored === "TR" || stored === "EN") {
-      setLanguage(stored);
-    }
-  }, []);
+  const language = useSyncExternalStore(subscribe, getLanguageSnapshot, () => "EN");
 
   function toggleLanguage() {
     const next = language === "EN" ? "TR" : "EN";
-    setLanguage(next);
-    window.localStorage.setItem("opspilot-language", next);
+    window.localStorage.setItem(storageKey, next);
     window.dispatchEvent(new CustomEvent("opspilot-language-change", { detail: next }));
   }
 

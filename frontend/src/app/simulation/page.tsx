@@ -451,12 +451,12 @@ export default function SimulationPage() {
               <div className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="font-black text-white">Judge demo checkpoints</h3>
+                    <h3 className="font-black text-white">Judge scenario checkpoints</h3>
                     <p className="mt-2 text-sm leading-6 text-slate-300">
                       What the reviewer should notice during the simulation.
                     </p>
                   </div>
-                  <StatusBadge label="demo ready" tone="cyan" />
+                  <StatusBadge label="scenario ready" tone="cyan" />
                 </div>
 
                 <div className="mt-4 space-y-3">
