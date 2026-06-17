@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PlatformShell } from "@/components/PlatformShell";
 import { StatusBadge } from "@/components/StatusBadge";
 
@@ -145,8 +145,23 @@ function toneForStatus(status: string): Tone {
 }
 
 export default function AdminPage() {
-  const [loaded, setLoaded] = useState(false);
-  const [state, setState] = useState<GovernanceState>(() => freshState());
+  const hasMounted = useRef(false);
+  const [state, setState] = useState<GovernanceState>(() => {
+    if (typeof window === "undefined") {
+      return freshState();
+    }
+
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return freshState();
+    }
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return freshState();
+    }
+  });
   const [toast, setToast] = useState<Toast | null>(null);
 
   const [newAgentId, setNewAgentId] = useState("");
@@ -160,22 +175,13 @@ export default function AdminPage() {
   const [newPostLanguage, setNewPostLanguage] = useState<"EN" | "TR">("EN");
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        setState(JSON.parse(raw));
-      } catch {
-        setState(freshState());
-      }
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
     }
-    setLoaded(true);
-  }, []);
 
-  useEffect(() => {
-    if (loaded) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-  }, [state, loaded]);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [state]);
 
   function notify(message: string, tone: Tone = "cyan") {
     setToast({ message, tone });

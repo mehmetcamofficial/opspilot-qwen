@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PlatformShell } from "@/components/PlatformShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { approveIncident, createIncident, healthcheck, listIncidents } from "@/lib/api";
+import { alertStreamUrl, approveIncident, assignIncident, createIncident, createIncidentFromAlert, getIncidentTimeline, healthcheck, listAlerts, listIncidents } from "@/lib/api";
 
 type TimelineItem = {
   agent: string;
@@ -11,8 +11,13 @@ type TimelineItem = {
 };
 
 type IncidentState = {
+  id?: string;
   incident_id?: string;
   status?: string;
+  state?: string;
+  service?: string;
+  severity?: string;
+  assignee?: string;
   triage_result?: {
     affected_service?: string;
     severity?: string;
@@ -35,7 +40,28 @@ type IncidentState = {
 
 type EvidenceTab = "metrics" | "logs" | "deployments" | "runbooks";
 
+type LiveAlert = {
+  id: string;
+  timestamp: string;
+  service: string;
+  severity: "P0" | "P1" | "P2" | "P3";
+  message: string;
+  signal: string;
+  region: string;
+  type: string;
+  affected_users: number;
+};
+
+type IncidentTimelineEvent = {
+  event: string;
+  message: string;
+  actor: string;
+  timestamp: string;
+  metadata?: Record<string, string>;
+};
+
 const stateMachine = ["triaging", "investigating", "hypothesis", "awaiting approval", "remediating", "monitoring", "resolved"];
+const responderOptions = ["alex.chen", "maria.k", "sre-primary"];
 
 const defaultEvidence: Record<EvidenceTab, string[]> = {
   metrics: ["p95 latency increased from 420ms to 2.8s", "cache hit ratio dropped from 91% to 41%", "database latency increased by 63%"],
@@ -124,10 +150,32 @@ function timelineFromState(state: IncidentState | null) {
   ];
 }
 
+function normalizeIncidentState(data: IncidentState): IncidentState {
+  if (data.incident_id || data.status) return data;
+
+  return {
+    ...data,
+    incident_id: data.id,
+    status: data.state,
+    triage_result: {
+      affected_service: data.service,
+      severity: data.severity?.toLowerCase(),
+    },
+    agent_timeline: [
+      { agent: "triage_agent", status: "created from alert" },
+      { agent: "observability_agent", status: "waiting" },
+      { agent: "approval_agent", status: "waiting" },
+    ],
+  };
+}
+
 export default function DashboardPage() {
   const [backendStatus, setBackendStatus] = useState<string>("not checked");
   const [incident, setIncident] = useState<IncidentState | null>(null);
   const [incidents, setIncidents] = useState<IncidentState[]>([]);
+  const [alerts, setAlerts] = useState<LiveAlert[]>([]);
+  const [incidentTimeline, setIncidentTimeline] = useState<IncidentTimelineEvent[]>([]);
+  const [alertStreamStatus, setAlertStreamStatus] = useState<string>("connecting");
   const [loading, setLoading] = useState(false);
   const [evidenceTab, setEvidenceTab] = useState<EvidenceTab>("metrics");
   const [toast, setToast] = useState<string | null>(null);
@@ -139,6 +187,48 @@ export default function DashboardPage() {
   const isResolved = status === "resolved";
   const isAwaitingApproval = status.includes("approval");
   const lifecycleStep = visualStep ?? deriveLifecycleStep(status, incident);
+  const canAssignIncident = Boolean(incident?.id);
+
+  useEffect(() => {
+    let mounted = true;
+
+    listAlerts()
+      .then((data) => {
+        if (mounted) {
+          setAlerts(data.alerts || []);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setAlertStreamStatus("waiting for backend");
+        }
+      });
+
+    const source = new EventSource(alertStreamUrl());
+
+    source.onopen = () => {
+      if (mounted) {
+        setAlertStreamStatus("live");
+      }
+    };
+
+    source.addEventListener("alert", (event) => {
+      if (!mounted) return;
+      const nextAlert = JSON.parse(event.data) as LiveAlert;
+      setAlerts((current) => [nextAlert, ...current.filter((item) => item.id !== nextAlert.id)].slice(0, 6));
+    });
+
+    source.onerror = () => {
+      if (mounted) {
+        setAlertStreamStatus("reconnecting");
+      }
+    };
+
+    return () => {
+      mounted = false;
+      source.close();
+    };
+  }, []);
 
   function notify(message: string) {
     setToast(message);
@@ -154,6 +244,20 @@ export default function DashboardPage() {
     if (error instanceof Error) return error.message;
     if (typeof error === "string") return error;
     return fallback;
+  }
+
+  async function loadIncidentTimeline(incidentId?: string) {
+    if (!incidentId) {
+      setIncidentTimeline([]);
+      return;
+    }
+
+    try {
+      const data = await getIncidentTimeline(incidentId);
+      setIncidentTimeline(data.timeline || []);
+    } catch {
+      setIncidentTimeline([]);
+    }
   }
 
   async function checkBackend() {
@@ -186,6 +290,7 @@ export default function DashboardPage() {
 
       const data = await createIncident();
       setIncident(data.state ?? data);
+      await loadIncidentTimeline(data.state?.incident_id ?? data.incident_id);
 
       await sleep(300);
       setVisualStep(3);
@@ -217,6 +322,48 @@ export default function DashboardPage() {
     }
   }
 
+  async function promoteAlert(alertId: string) {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await createIncidentFromAlert(alertId);
+      const normalized = normalizeIncidentState(data);
+      setIncident(normalized);
+      await loadIncidentTimeline(normalized.incident_id);
+      setVisualStep(0);
+      notify(`Incident created from alert ${alertId}.`);
+    } catch (error: unknown) {
+      const errorMsg = extractErrorMessage(error, "Failed to create incident from live alert.");
+      showError(errorMsg);
+      console.error("Create incident from alert error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function assignActiveIncident(assignee: string) {
+    if (!incident?.incident_id || !canAssignIncident) {
+      notify("Create an incident from a live alert before assigning ownership.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await assignIncident(incident.incident_id, assignee);
+      const normalized = normalizeIncidentState(data);
+      setIncident(normalized);
+      await loadIncidentTimeline(normalized.incident_id);
+      notify(`Incident assigned to ${assignee}.`);
+    } catch (error: unknown) {
+      const errorMsg = extractErrorMessage(error, "Failed to assign incident owner.");
+      showError(errorMsg);
+      console.error("Assign incident error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function approve() {
     if (!incident?.incident_id) {
       notify("Start an incident before approval.");
@@ -234,6 +381,7 @@ export default function DashboardPage() {
 
       await sleep(450);
       setIncident(data.state ?? data);
+      await loadIncidentTimeline(data.state?.incident_id ?? data.incident_id);
       setVisualStep(6);
       notify("Remediation approved. Execution review and postmortem generated.");
     } catch (error: unknown) {
@@ -336,6 +484,56 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <section className="mb-5 rounded-3xl border border-cyan-400/15 bg-slate-950/70 p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-2xl font-black text-white">Live alert stream</h2>
+                <StatusBadge label={alertStreamStatus} tone={alertStreamStatus === "live" ? "green" : "amber"} />
+              </div>
+              <p className="mt-2 text-sm text-slate-400">
+                Incoming operational alerts from the backend stream. Promote a signal when it needs incident command.
+              </p>
+            </div>
+            <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-cyan-100">
+              SSE feed
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            {alerts.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-sm text-slate-400">
+                Waiting for the first live alert...
+              </div>
+            ) : (
+              alerts.slice(0, 3).map((alert) => (
+                <div key={alert.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-mono text-xs font-black text-cyan-100">{alert.id}</div>
+                      <h3 className="mt-2 truncate text-lg font-black text-white">{alert.service}</h3>
+                    </div>
+                    <StatusBadge label={alert.severity} tone={alert.severity === "P0" ? "amber" : alert.severity === "P1" ? "violet" : "slate"} />
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">{alert.message}</p>
+                  <div className="mt-3 grid gap-2 text-xs text-slate-400">
+                    <div>Signal: {alert.signal}</div>
+                    <div>Region: {alert.region}</div>
+                    <div>Affected users: {alert.affected_users.toLocaleString()}</div>
+                  </div>
+                  <button
+                    onClick={() => promoteAlert(alert.id)}
+                    disabled={loading}
+                    className="mt-4 w-full rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-3 py-2 text-xs font-black text-cyan-50 hover:bg-cyan-300/20 disabled:opacity-50"
+                  >
+                    Create incident
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="mb-4 flex flex-wrap gap-3">
@@ -399,6 +597,7 @@ export default function DashboardPage() {
                   <MetricCard title="Service" value={incident?.triage_result?.affected_service || "checkout-api"} />
                   <MetricCard title="Environment" value="production" />
                   <MetricCard title="Severity" value={incident?.triage_result?.severity || "high"} />
+                  <MetricCard title="Assignee" value={incident?.assignee || "unassigned"} />
                   <MetricCard title="Business impact" value="checkout degraded" />
                   <MetricCard title="Confidence" value={String(incident?.hypothesis_result?.confidence || "0.86")} />
                   <MetricCard title="Risk" value={incident?.risk_review?.risk_level || "medium"} />
@@ -455,7 +654,13 @@ export default function DashboardPage() {
 
             <div className="grid items-start gap-5 lg:grid-cols-[1fr_1fr]">
               <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
-                <h2 className="text-2xl font-black text-white">Live agent timeline</h2>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-white">Live agent timeline</h2>
+                    <p className="mt-1 text-sm text-slate-400">Agent progress plus recorded incident events.</p>
+                  </div>
+                  <StatusBadge label={`${incidentTimeline.length} events`} tone={incidentTimeline.length ? "green" : "slate"} />
+                </div>
                 <div className="mt-5 grid gap-3 md:grid-cols-2">
                   {timeline.map((item: TimelineItem, index: number) => (
                     <div key={`${item.agent}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
@@ -479,6 +684,32 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                <div className="mt-5 rounded-3xl border border-cyan-400/15 bg-cyan-400/10 p-4">
+                  <h3 className="font-black text-white">Incident event log</h3>
+                  <div className="mt-4 space-y-3">
+                    {incidentTimeline.length === 0 ? (
+                      <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-sm text-slate-400">
+                        Create an incident from the live alert stream to populate event history.
+                      </div>
+                    ) : (
+                      incidentTimeline.map((event, index) => (
+                        <div key={`${event.event}-${event.timestamp}-${index}`} className="rounded-2xl border border-white/10 bg-slate-950/40 p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-black text-cyan-100">{event.event.replaceAll("_", " ")}</div>
+                              <div className="mt-1 text-sm leading-6 text-slate-300">{event.message}</div>
+                            </div>
+                            <div className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-black text-slate-400">
+                              {event.actor}
+                            </div>
+                          </div>
+                          <div className="mt-2 font-mono text-[11px] text-slate-500">{new Date(event.timestamp).toLocaleString()}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </section>
 
@@ -525,6 +756,33 @@ export default function DashboardPage() {
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-24">
+            <section className="rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-white">Ownership</h2>
+                  <p className="mt-1 text-sm text-cyan-100/80">Assign a clear responder for the active incident.</p>
+                </div>
+                <StatusBadge label={incident?.assignee || "unassigned"} tone={incident?.assignee && incident.assignee !== "unassigned" ? "green" : "amber"} />
+              </div>
+
+              <div className="mt-5 grid gap-2">
+                {responderOptions.map((assignee) => (
+                  <button
+                    key={assignee}
+                    onClick={() => assignActiveIncident(assignee)}
+                    disabled={loading || !canAssignIncident}
+                    className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                      incident?.assignee === assignee
+                        ? "border-emerald-300 bg-emerald-300 text-slate-950"
+                        : "border-white/10 bg-slate-950/40 text-cyan-50 hover:bg-white/[0.08]"
+                    }`}
+                  >
+                    {assignee}
+                  </button>
+                ))}
+              </div>
+            </section>
+
             <section className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>

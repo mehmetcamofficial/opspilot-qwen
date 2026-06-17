@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { PlatformShell } from "@/components/PlatformShell";
 import { StatusBadge } from "@/components/StatusBadge";
 
@@ -26,9 +27,12 @@ export default function ArchitecturePage() {
         </div>
 
         <div className="rounded-[2rem] border border-cyan-400/20 bg-slate-950/70 p-4 shadow-[0_0_80px_rgba(34,211,238,0.12)]">
-          <img
+          <Image
             src="/architecture_workflow_diagram.png"
             alt="OpsPilot architecture workflow diagram"
+            width={1672}
+            height={941}
+            priority
             className="w-full rounded-[1.5rem] border border-white/10"
           />
         </div>

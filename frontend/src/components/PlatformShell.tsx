@@ -14,6 +14,7 @@ const fullNavItems = [
   ["Home", "/"],
   ["Command Center", "/dashboard"],
   ["Simulation", "/simulation"],
+  ["Status", "/status"],
   ["Architecture", "/architecture"],
   ["Governance", "/admin"],
   ["Reasoning Graph", "/knowledge-graph"],
@@ -60,6 +61,14 @@ const pageMeta: Record<string, { title: string; subtitle: string; actions: [stri
       ["Reasoning Graph", "/knowledge-graph"],
     ],
   },
+  "/status": {
+    title: "Public Status",
+    subtitle: "Customer-facing service health and active incident visibility",
+    actions: [
+      ["Command Center", "/dashboard"],
+      ["Simulation", "/simulation"],
+    ],
+  },
   "/knowledge-graph": {
     title: "Reasoning Graph",
     subtitle: "Evidence lineage and incident explainability map",
@@ -92,16 +101,16 @@ export function PlatformShell({ children }: PlatformShellProps) {
       <div className="relative z-10">
         {isHome ? (
           <header className="sticky top-0 z-50 border-b border-white/5 bg-[#030712]/70 backdrop-blur-xl">
-            <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+            <div className="mx-auto flex max-w-[96rem] items-center justify-between gap-4 px-6 py-4">
               <Link href="/" aria-label="OpsPilot home" className="shrink-0">
                 <OpsPilotLogo />
               </Link>
 
-              <nav className="hidden max-w-3xl flex-wrap items-center justify-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-300 shadow-[0_0_40px_rgba(15,23,42,0.35)] lg:flex">
+              <nav className="hidden max-w-none flex-nowrap items-center justify-center gap-0 rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-300 shadow-[0_0_40px_rgba(15,23,42,0.35)] lg:flex">
                 {fullNavItems.map(([label, href]) => (
                   <Link
                     key={href}
-                    className={`rounded-full px-3 py-2 transition ${
+                    className={`rounded-full px-2.5 py-2 transition whitespace-nowrap ${
                       pathname === href
                         ? "bg-cyan-300 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.25)]"
                         : "hover:bg-white/10 hover:text-white"
@@ -125,7 +134,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
               </div>
             </div>
 
-            <div className="mx-auto block max-w-7xl px-6 pb-4 lg:hidden">
+            <div className="mx-auto block max-w-[96rem] px-6 pb-4 lg:hidden">
               <div className="flex gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03] p-2">
                 {fullNavItems.map(([label, href]) => (
                   <Link

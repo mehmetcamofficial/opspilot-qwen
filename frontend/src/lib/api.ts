@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
 export const demoAlertPayload = {
   alert: {
@@ -60,4 +60,36 @@ export async function approveIncident(incidentId: string) {
   return fetchJson(`${API_BASE_URL}/incidents/${incidentId}/approve`, {
     method: "POST"
   });
+}
+
+export function alertStreamUrl() {
+  return `${API_BASE_URL}/api/alerts/stream`;
+}
+
+export async function listAlerts() {
+  return fetchJson(`${API_BASE_URL}/api/alerts`);
+}
+
+export async function createIncidentFromAlert(alertId: string) {
+  return fetchJson(`${API_BASE_URL}/api/alerts/${alertId}/incident`, {
+    method: "POST"
+  });
+}
+
+export async function getIncidentTimeline(incidentId: string) {
+  return fetchJson(`${API_BASE_URL}/api/incidents/${incidentId}/timeline`);
+}
+
+export async function assignIncident(incidentId: string, assignee: string) {
+  return fetchJson(`${API_BASE_URL}/api/incidents/${incidentId}/assign`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ assignee })
+  });
+}
+
+export async function getPublicStatus() {
+  return fetchJson(`${API_BASE_URL}/api/incidents/public-status`);
 }

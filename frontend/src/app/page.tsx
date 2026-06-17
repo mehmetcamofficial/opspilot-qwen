@@ -363,12 +363,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
+    const timer = window.setTimeout(() => {
       setActiveStep((current) => (current + 1) % landingContent[language].live.steps.length);
     }, 1700);
 
-    return () => window.clearInterval(timer);
-  }, [language]);
+    return () => window.clearTimeout(timer);
+  }, [language, activeStep]);
 
   const copy = landingContent[language];
   const current = copy.live.steps[activeStep];
@@ -386,7 +386,7 @@ export default function Home() {
         {/* landing-video-background-layer */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <video
-            className="absolute inset-0 h-full w-full object-cover opacity-[0.34]"
+            className="absolute inset-0 h-full w-full object-cover opacity-[0.28]"
             src="/opspilot-ambient-bg.webm"
             autoPlay
             muted
@@ -395,9 +395,9 @@ export default function Home() {
             preload="metadata"
             aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_28%,rgba(34,211,238,0.18),transparent_34%),radial-gradient(circle_at_86%_18%,rgba(167,139,250,0.18),transparent_36%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(2,6,23,0.30),rgba(2,6,23,0.54)_48%,rgba(2,6,23,0.68))]" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(2,6,23,0.04),rgba(2,6,23,0.62)_72%,rgba(2,6,23,0.86))]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_28%,rgba(56,189,248,0.16),transparent_34%),radial-gradient(circle_at_86%_18%,rgba(167,139,250,0.14),transparent_36%),radial-gradient(circle_at_50%_100%,rgba(34,211,238,0.08),transparent_28%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(2,6,23,0.18),rgba(15,23,42,0.42)_48%,rgba(15,23,42,0.56))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(2,6,23,0.02),rgba(15,23,42,0.48)_72%,rgba(15,23,42,0.76))]" />
         </div>
 
         {/* Hero Section with Live Command Flow on Right */}
@@ -417,28 +417,28 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300">
+            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-200">
               {copy.hero.description}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/dashboard"
-                className="rounded-2xl bg-cyan-300 px-6 py-4 text-sm font-black text-slate-950 shadow-[0_0_40px_rgba(34,211,238,0.18)] hover:bg-cyan-200"
+                className="rounded-2xl bg-cyan-300 px-6 py-4 text-sm font-black text-slate-950 shadow-[0_0_36px_rgba(34,211,238,0.14)] hover:bg-cyan-200"
               >
                 {copy.hero.primaryCta}
               </Link>
 
               <Link
                 href="/simulation"
-                className="rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 text-sm font-black text-white hover:bg-white/[0.08]"
+                className="rounded-2xl border border-white/10 bg-white/[0.05] px-6 py-4 text-sm font-black text-white hover:bg-white/[0.09]"
               >
                 {copy.hero.secondaryCta}
               </Link>
 
               <Link
                 href="/architecture"
-                className="rounded-2xl border border-violet-400/20 bg-violet-400/10 px-6 py-4 text-sm font-black text-violet-100 hover:bg-violet-400/20"
+                className="rounded-2xl border border-violet-400/20 bg-violet-400/12 px-6 py-4 text-sm font-black text-violet-100 hover:bg-violet-400/22"
               >
                 {copy.hero.tertiaryCta}
               </Link>
@@ -446,8 +446,8 @@ export default function Home() {
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 max-w-2xl">
               {copy.hero.proofItems.map(([label, value]) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                  <div className="text-xs uppercase tracking-wider text-slate-500">{label}</div>
+                <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+                  <div className="text-xs uppercase tracking-wider text-slate-400">{label}</div>
                   <div className="mt-2 font-black text-white">{value}</div>
                 </div>
               ))}
@@ -455,14 +455,14 @@ export default function Home() {
           </div>
 
           {/* Right: Live Command Flow (Compact) */}
-          <div className="rounded-[2rem] border border-cyan-400/20 bg-slate-950/75 p-6 shadow-[0_0_50px_rgba(34,211,238,0.12)] h-full flex flex-col">
+          <div className="rounded-[2rem] border border-cyan-400/18 bg-slate-900/72 p-6 shadow-[0_0_50px_rgba(34,211,238,0.1)] h-full flex flex-col">
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-xl font-black text-white">{copy.live.title}</h2>
-                <p className="mt-1 text-xs text-slate-400">{copy.live.subtitle}</p>
-              </div>
-              <StatusBadge label={copy.live.autoplay} tone="green" />
+              <p className="mt-1 text-xs text-slate-300">{copy.live.subtitle}</p>
             </div>
+            <StatusBadge label={copy.live.autoplay} tone="green" />
+          </div>
 
             <div className="grid gap-2 grid-cols-2 mb-4 flex-grow">
               <MetricCard title={activeMetrics[0][0]} value={activeMetrics[0][1]} detail={activeMetrics[0][2]} />
@@ -471,15 +471,15 @@ export default function Home() {
               <MetricCard title={activeMetrics[3][0]} value={activeMetrics[3][1]} detail={activeMetrics[3][2]} />
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 mb-4 flex-grow flex flex-col justify-center">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 mb-4 flex-grow flex flex-col justify-center">
               <div className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">
                 {copy.live.stepLabel} {activeStep + 1}
               </div>
               <h3 className="mt-2 text-lg font-black text-white">{current.title}</h3>
-              <p className="mt-2 text-xs leading-5 text-slate-300">{current.detail}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-200">{current.detail}</p>
 
-              <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/60 p-3">
-                <div className="text-xs uppercase tracking-wider text-slate-500">{current.metric}</div>
+              <div className="mt-3 rounded-xl border border-white/10 bg-slate-900/65 p-3">
+                <div className="text-xs uppercase tracking-wider text-slate-400">{current.metric}</div>
                 <div className="mt-1 text-2xl font-black text-white">{current.value}</div>
               </div>
             </div>
@@ -494,7 +494,7 @@ export default function Home() {
                       ? "border-cyan-300 bg-cyan-300 text-slate-950"
                       : index < activeStep
                       ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
-                      : "border-white/10 bg-white/[0.035] text-slate-300 hover:bg-white/[0.07]"
+                      : "border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.09]"
                   }`}
                 >
                   <span className="font-black">{step.title}</span>
@@ -509,27 +509,27 @@ export default function Home() {
 
         {/* Why / How / What - Three Equal Cards */}
         <section className="mb-6 grid gap-4 lg:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-slate-950/65 p-6 flex flex-col">
+          <div className="rounded-3xl border border-white/10 bg-slate-900/68 p-6 flex flex-col">
             <StatusBadge label={copy.overview.why.badge} tone="cyan" />
             <h3 className="mt-4 text-2xl font-black text-white">{copy.overview.why.title}</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-400 flex-grow">{copy.overview.why.body}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-300 flex-grow">{copy.overview.why.body}</p>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-slate-950/65 p-6 flex flex-col">
+          <div className="rounded-3xl border border-white/10 bg-slate-900/68 p-6 flex flex-col">
             <StatusBadge label={copy.overview.how.badge} tone="violet" />
             <h3 className="mt-4 text-2xl font-black text-white">{copy.overview.how.title}</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-400 flex-grow">{copy.overview.how.body}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-300 flex-grow">{copy.overview.how.body}</p>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-slate-950/65 p-6 flex flex-col">
+          <div className="rounded-3xl border border-white/10 bg-slate-900/68 p-6 flex flex-col">
             <StatusBadge label={copy.overview.what.badge} tone="green" />
             <h3 className="mt-4 text-2xl font-black text-white">{copy.overview.what.title}</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-400 flex-grow">{copy.overview.what.body}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-300 flex-grow">{copy.overview.what.body}</p>
           </div>
         </section>
 
         {/* Before vs After - Full Width 2x2 Grid */}
-        <section className="mb-6 rounded-[2rem] border border-white/10 bg-slate-950/65 p-8">
+        <section className="mb-6 rounded-[2rem] border border-white/10 bg-slate-900/68 p-8">
           <div className="mb-6">
             <StatusBadge label={copy.compare.badge} tone="violet" />
             <h2 className="mt-4 text-3xl font-black text-white md:text-4xl">{copy.compare.title}</h2>
@@ -542,12 +542,12 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-8 rounded-[2rem] border border-white/10 bg-slate-950/65 p-6">
+        <section className="mt-8 rounded-[2rem] border border-white/10 bg-slate-900/68 p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <StatusBadge label={copy.pillars.badge} tone="cyan" />
               <h2 className="mt-4 text-3xl font-black text-white md:text-5xl">{copy.pillars.title}</h2>
-              <p className="mt-4 max-w-3xl text-slate-400">{copy.pillars.description}</p>
+              <p className="mt-4 max-w-3xl text-slate-300">{copy.pillars.description}</p>
             </div>
 
             <Link
@@ -560,7 +560,7 @@ export default function Home() {
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {copy.pillars.items.map((pillar, index) => (
-              <div key={pillar.title} className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <div key={pillar.title} className="rounded-3xl border border-white/10 bg-white/[0.05] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs font-black text-cyan-100">
                     0{index + 1}
@@ -572,11 +572,11 @@ export default function Home() {
                 </div>
 
                 <h3 className="mt-5 text-2xl font-black text-white">{pillar.title}</h3>
-                <p className="mt-3 min-h-[72px] text-sm leading-6 text-slate-400">{pillar.subtitle}</p>
+                <p className="mt-3 min-h-[72px] text-sm leading-6 text-slate-300">{pillar.subtitle}</p>
 
                 <div className="mt-5 space-y-2">
                   {pillar.bullets.map((bullet) => (
-                    <div key={bullet} className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm font-bold text-slate-200">
+                    <div key={bullet} className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm font-bold text-slate-100">
                       {bullet}
                     </div>
                   ))}
@@ -608,10 +608,10 @@ function MetricCard({ title, value, detail }: { title: string; value: string; de
 
 function InfoPanel({ title, label, body }: { title: string; label: string; body: string }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-slate-950/65 p-6">
+    <div className="rounded-3xl border border-white/10 bg-slate-900/68 p-6">
       <StatusBadge label={label} tone="violet" />
       <h3 className="mt-4 text-2xl font-black text-white">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-slate-400">{body}</p>
+      <p className="mt-3 text-sm leading-7 text-slate-300">{body}</p>
     </div>
   );
 }
