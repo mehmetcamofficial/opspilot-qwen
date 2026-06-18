@@ -19,7 +19,10 @@ async function loadPuppeteer() {
 }
 
 function isIgnorableConsoleError(message) {
-  return message.includes("/_next/webpack-hmr");
+  return (
+    message.includes("/_next/webpack-hmr") ||
+    message.includes("Failed to load resource: net::ERR_CONNECTION_REFUSED")
+  );
 }
 
 const puppeteer = await loadPuppeteer();
