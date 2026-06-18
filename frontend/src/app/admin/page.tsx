@@ -319,6 +319,11 @@ export default function AdminPage() {
     notify("Governance controls reset.", "amber");
   }
 
+  async function signOut() {
+    await fetch("/api/admin-auth/logout", { method: "POST" });
+    window.location.href = "/admin/login";
+  }
+
   return (
     <PlatformShell>
       <section className="mx-auto max-w-7xl px-6 pb-16 pt-8">
@@ -351,6 +356,9 @@ export default function AdminPage() {
             </button>
             <button onClick={resetGovernance} className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-5 py-3 text-sm font-black text-amber-100 hover:bg-amber-400/20">
               Reset controls
+            </button>
+            <button onClick={signOut} className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-black text-slate-200 hover:bg-white/[0.08]">
+              Sign out
             </button>
           </div>
         </div>

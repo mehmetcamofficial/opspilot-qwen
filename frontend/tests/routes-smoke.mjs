@@ -6,7 +6,7 @@ const routes = [
   { path: "/simulation", expectedText: "Simulation Lab" },
   { path: "/status", expectedText: "Public status" },
   { path: "/architecture", expectedText: "System architecture" },
-  { path: "/admin", expectedText: "Governance Console" },
+  { path: "/admin", expectedText: "Admin access required" },
   { path: "/knowledge-graph", expectedText: "Reasoning Graph" },
 ];
 
