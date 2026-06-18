@@ -250,6 +250,38 @@ def test_public_status_reports_active_p0_incident():
     assert body["services"][0]["assignee"] == "sre-primary"
 
 
+def test_ai_insights_returns_ranked_recommendations_and_summary():
+    base_incident = {
+        **incident_for_severity("P1"),
+        "id": "INC-AI-BASE",
+        "service": "checkout-api",
+        "tags": ["latency", "checkout-api"],
+        "recommended_action": "Rollback cache configuration",
+    }
+    similar_incident = {
+        **incident_for_severity("P2"),
+        "id": "INC-AI-SIMILAR",
+        "service": "checkout-api",
+        "tags": ["latency", "checkout-api"],
+        "recommended_action": "Restored previous cache TTL",
+    }
+    client.post("/api/incidents", json=similar_incident)
+    client.post("/api/incidents", json=base_incident)
+
+    response = client.get("/api/incidents/INC-AI-BASE/ai-insights")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["incident_id"] == "INC-AI-BASE"
+    assert len(body["root_causes"]) == 3
+    assert body["root_causes"][0]["confidence"] >= body["root_causes"][1]["confidence"]
+    assert body["similar_incidents"][0]["incident_id"] == "INC-AI-SIMILAR"
+    assert body["triage"]["suggested_assignee"] == "payments-sre"
+    assert body["safety_check"]["requires_confirmation"] is True
+    assert body["anomaly"]["detected"] is True
+    assert "checkout-api" in body["summary"]
+
+
 def test_public_status_hides_resolved_incidents():
     incident = {
         **incident_for_severity("P1"),

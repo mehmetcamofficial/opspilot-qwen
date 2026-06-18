@@ -151,6 +151,88 @@ def public_status_summary() -> dict[str, Any]:
     }
 
 
+def similar_incidents_for(incident: dict[str, Any]) -> list[dict[str, Any]]:
+    candidates = []
+    incident_tags = set(incident.get("tags", []))
+    for candidate in incident_store.values():
+        if candidate["id"] == incident["id"]:
+            continue
+        shared_tags = incident_tags.intersection(candidate.get("tags", []))
+        if candidate["service"] == incident["service"] or shared_tags:
+            candidates.append(
+                {
+                    "incident_id": candidate["id"],
+                    "service": candidate["service"],
+                    "severity": candidate["severity"],
+                    "resolution": candidate.get("recommended_action", "Review prior mitigation notes"),
+                    "similarity": min(0.98, 0.62 + (0.18 if candidate["service"] == incident["service"] else 0) + (0.05 * len(shared_tags))),
+                }
+            )
+
+    return sorted(candidates, key=lambda item: item["similarity"], reverse=True)[:3]
+
+
+def ai_insights_for(incident: dict[str, Any]) -> dict[str, Any]:
+    service = incident["service"]
+    severity = incident["severity"]
+    affected_users = incident.get("affected_users", 0)
+    signal_type = incident.get("type", "latency")
+    confidence = incident.get("ai_confidence", 76)
+    timeline = incident.get("timeline", [])
+    is_stalling = incident["state"] != "resolved" and len(timeline) >= 3
+    suggested_assignee = "sre-primary" if severity in {"P0", "P1"} else "platform-responder"
+    if service in {"checkout-api", "payment-api"}:
+        suggested_assignee = "payments-sre"
+    elif service in {"auth-service"}:
+        suggested_assignee = "identity-sre"
+
+    root_causes = [
+        {
+            "title": f"{service} regression after recent operational change",
+            "confidence": min(0.96, confidence / 100),
+            "evidence": ["recent deployment/config signal", incident["message"], incident.get("recommended_action", "Investigate correlated telemetry")],
+        },
+        {
+            "title": f"{signal_type} saturation affecting downstream dependencies",
+            "confidence": 0.73 if severity in {"P0", "P1"} else 0.62,
+            "evidence": [f"{affected_users} affected users", f"severity {severity}", f"region {incident.get('region', 'unknown')}"],
+        },
+        {
+            "title": "Noisy alert without customer-wide impact",
+            "confidence": 0.31 if severity in {"P0", "P1"} else 0.48,
+            "evidence": ["requires responder confirmation", "compare against baseline metrics"],
+        },
+    ]
+
+    return {
+        "incident_id": incident["id"],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "root_causes": root_causes,
+        "similar_incidents": similar_incidents_for(incident),
+        "triage": {
+            "severity": severity,
+            "suggested_assignee": suggested_assignee,
+            "reason": f"{service} has {affected_users} affected users and severity {severity}.",
+        },
+        "escalation": {
+            "should_escalate": severity == "P0" or is_stalling,
+            "reason": "P0 severity requires immediate commander escalation." if severity == "P0" else ("Incident has multiple timeline events without resolution." if is_stalling else "No escalation required yet."),
+        },
+        "safety_check": {
+            "risk_level": "high" if severity == "P0" else "medium",
+            "requires_confirmation": True,
+            "explanation": "Review blast radius, rollback safety, and evidence confidence before executing remediation.",
+        },
+        "anomaly": {
+            "detected": severity in {"P0", "P1", "P2"},
+            "baseline": "normal operating threshold",
+            "current": incident.get("message", "current signal exceeds expected baseline"),
+            "deviation": "critical" if severity == "P0" else ("elevated" if severity in {"P1", "P2"} else "low"),
+        },
+        "summary": f"{severity} incident on {service}: {incident['message']} Recommended owner is {suggested_assignee}; safest next step is to validate evidence and confirm remediation.",
+    }
+
+
 async def parse_bulk_payload(request: Request) -> BulkImportRequest:
     payload = await request.json()
     if isinstance(payload, list):
@@ -254,6 +336,15 @@ async def incident_metrics():
         "affected_users": sum(incident["affected_users"] for incident in incidents),
         "average_mttr_minutes": round(sum(mttr_values) / len(mttr_values), 2) if mttr_values else None,
     }
+
+
+@router.get("/{incident_id}/ai-insights")
+async def get_incident_ai_insights(incident_id: str):
+    try:
+        incident = incident_store[incident_id]
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    return ai_insights_for(incident)
 
 
 @router.get("/{incident_id}")
