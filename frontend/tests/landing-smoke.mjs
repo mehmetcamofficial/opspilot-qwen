@@ -1,9 +1,4 @@
 const baseUrl = process.env.LANDING_SMOKE_URL || "http://localhost:3001";
-const stepLabels = ["Alert intake", "Evidence correlation", "Safety gate", "Recovery verified"];
-
-function sleep(milliseconds) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
 
 async function loadPuppeteer() {
   try {
@@ -11,17 +6,6 @@ async function loadPuppeteer() {
   } catch {
     throw new Error("Landing smoke test requires Puppeteer. Install it before running this check.");
   }
-}
-
-async function activeStepLabel(page) {
-  return page.evaluate((labels) => {
-    const activeButton = Array.from(document.querySelectorAll("button")).find((button) => {
-      const text = button.textContent || "";
-      return button.className.includes("bg-cyan-300") && labels.some((label) => text.includes(label));
-    });
-
-    return labels.find((label) => activeButton?.textContent?.includes(label)) || null;
-  }, stepLabels);
 }
 
 async function assertPageHasText(page, text) {
@@ -58,23 +42,13 @@ try {
 
   await page.goto(baseUrl, { waitUntil: "networkidle2" });
   await assertPageHasText(page, "AI incident operations,");
-  await assertPageHasText(page, "Live command flow");
-
-  const observedSteps = new Set();
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const label = await activeStepLabel(page);
-    if (label) {
-      observedSteps.add(label);
-    }
-    await sleep(1100);
-  }
-
-  if (observedSteps.size < 3) {
-    throw new Error(`Live command flow did not advance through enough steps. Observed=${Array.from(observedSteps).join(", ")}`);
-  }
+  await assertPageHasText(page, "Live incident command");
+  await assertPageHasText(page, "Incidents do not wait. Your tools should not either.");
+  await assertPageHasText(page, "Platform Engineers");
 
   await page.click('button[aria-label="Toggle language"]');
   await page.waitForFunction(() => document.body.innerText.includes("Yapay zeka olay operasyonları,"));
+  await page.waitForFunction(() => document.body.innerText.includes("Olaylar beklemez. Araçlarınız da beklememeli."));
   await page.click('button[aria-label="Toggle language"]');
   await page.waitForFunction(() => document.body.innerText.includes("AI incident operations,"));
 

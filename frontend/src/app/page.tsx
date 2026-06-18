@@ -20,74 +20,16 @@ const landingContent = {
       primaryCta: "Open Command Center",
       secondaryCta: "Run Simulation",
       tertiaryCta: "View Architecture",
-      proofItems: [
-        ["Track fit", "Autopilot Agent"],
-        ["Core loop", "Investigate -> approve -> recover"],
-        ["Model layer", "Qwen-ready / mock-safe"],
-        ["Deployment", "Vercel + FastAPI + Alibaba plan"],
-      ] as const,
+      finalCtaTitle: "Ready to take command?",
+      finalCtaBody: "Open the Command Center and walk through the controlled incident lifecycle.",
+      mockupCaption: "Live incident command — see it in action →",
+      mockupRows: ["Signal intake", "Evidence linked", "Human approval", "Recovery record"] as const,
     },
-    live: {
-      title: "Live command flow",
-      subtitle: "Checkout API latency incident",
-      autoplay: "autoplay",
-      stepLabel: "Step",
-      steps: [
-        {
-          title: "Alert intake",
-          detail: "Checkout API latency anomaly enters the incident command flow.",
-          metric: "p95 latency",
-          value: "2.8s",
-        },
-        {
-          title: "Evidence correlation",
-          detail: "Metrics, logs, deployment context, and runbooks are linked.",
-          metric: "cache hit ratio",
-          value: "41%",
-        },
-        {
-          title: "Safety gate",
-          detail: "Production rollback is paused until human approval.",
-          metric: "policy",
-          value: "approval",
-        },
-        {
-          title: "Recovery verified",
-          detail: "Rollback completes and telemetry confirms recovery.",
-          metric: "p95 latency",
-          value: "480ms",
-        },
-      ] as const,
-      metrics: {
-        latency: {
-          title: "p95 latency",
-          criticalValue: "2.8s",
-          criticalDetail: "critical",
-          healthyValue: "480ms",
-          healthyDetail: "recovered",
-        },
-        cache: {
-          title: "cache hit ratio",
-          criticalValue: "41%",
-          criticalDetail: "degraded",
-          healthyValue: "89%",
-          healthyDetail: "healthy",
-        },
-        risk: {
-          title: "risk gate",
-          criticalValue: "watching",
-          criticalDetail: "standby",
-          healthyValue: "approval",
-          healthyDetail: "active",
-        },
-        postmortem: {
-          title: "postmortem",
-          criticalValue: "draft",
-          criticalDetail: "pending",
-          healthyValue: "ready",
-          healthyDetail: "generated",
-        },
-      },
+    socialProof: ["Built for teams running on Qwen", "Deployable on Alibaba Cloud", "Human-in-the-loop by design"] as const,
+    problem: {
+      title: "Incidents do not wait. Your tools should not either.",
+      body:
+        "Slow response turns signals into outages, chat threads into confusion, and recovery into guesswork. OpsPilot gives operators a controlled command path before pressure becomes chaos.",
     },
     overview: {
       why: {
@@ -112,6 +54,8 @@ const landingContent = {
     compare: {
       badge: "Before vs After OpsPilot",
       title: "From chaotic remediation to structured incident command.",
+      beforeTitle: "Before OpsPilot",
+      afterTitle: "After OpsPilot",
       pairs: [
         ["Manual triage", "Slow, inconsistent decisions", "Fast, evidence-backed actions"],
         ["Slack chaos", "Scattered chat threads", "Clear command flow"],
@@ -122,8 +66,6 @@ const landingContent = {
     pillars: {
       badge: "Core platform pillars",
       title: "One lifecycle. Four controlled stages.",
-      description:
-        "The landing page now focuses on the product's core path instead of scattering attention across secondary modules.",
       cta: "Inspect Command Center",
       items: [
         {
@@ -150,22 +92,22 @@ const landingContent = {
     },
     infoPanels: [
       {
-        title: "For judges",
-        label: "proof path",
+        title: "Platform Engineers",
+        icon: "⌘",
         body:
-          "Start at the landing page, open the Command Center, run an incident, approve remediation, then show the generated postmortem.",
+          "Stop triaging in scattered chat. OpsPilot gives you structured evidence, ranked hypotheses, and safe rollback in one command flow.",
       },
       {
-        title: "For operators",
-        label: "control",
+        title: "Incident Commanders",
+        icon: "◉",
         body:
-          "OpsPilot does not blindly execute production actions. It separates confidence, risk, policy, and human approval.",
+          "Stay in control without slowing response. Every AI recommendation waits for your approval before touching production.",
       },
       {
-        title: "For cloud proof",
-        label: "architecture",
+        title: "Engineering Leaders",
+        icon: "▥",
         body:
-          "The backend is Qwen-ready and can move from local mock mode to Alibaba Cloud deployment once credits are active.",
+          "Full audit trail, MTTR trends, and post-incident reports generated automatically. Visibility without another meeting.",
       },
     ] as const,
   },
@@ -179,74 +121,16 @@ const landingContent = {
       primaryCta: "Komuta Merkezini Aç",
       secondaryCta: "Simülasyonu Çalıştır",
       tertiaryCta: "Mimariyi Gör",
-      proofItems: [
-        ["Eşleşme", "Autopilot Agent"],
-        ["Ana döngü", "İncele -> onayla -> kurtar"],
-        ["Model katmanı", "Qwen uyumlu / mock-safe"],
-        ["Dağıtım", "Vercel + FastAPI + Alibaba planı"],
-      ] as const,
+      finalCtaTitle: "Komutayı almaya hazır mısınız?",
+      finalCtaBody: "Komuta Merkezini açın ve kontrollü olay yaşam döngüsünü inceleyin.",
+      mockupCaption: "Canlı olay komutunu görün — simülasyonda incele →",
+      mockupRows: ["Sinyal alımı", "Kanıt bağlandı", "İnsan onayı", "Kurtarma kaydı"] as const,
     },
-    live: {
-      title: "Canlı komut akışı",
-      subtitle: "Checkout API gecikme olayı",
-      autoplay: "otomatik",
-      stepLabel: "Adım",
-      steps: [
-        {
-          title: "Uyarı alımı",
-          detail: "Checkout API gecikme anomalisi olay komut akışına girer.",
-          metric: "p95 gecikme",
-          value: "2.8s",
-        },
-        {
-          title: "Kanıt eşleme",
-          detail: "Metrikler, loglar, dağıtım bağlamı ve runbook'lar bağlanır.",
-          metric: "önbellek isabet oranı",
-          value: "41%",
-        },
-        {
-          title: "Güvenlik kapısı",
-          detail: "Üretim geri dönüşü insan onayı gelene kadar bekletilir.",
-          metric: "politika",
-          value: "onay",
-        },
-        {
-          title: "Kurtarma doğrulandı",
-          detail: "Geri dönüş tamamlanır ve telemetri kurtarmayı doğrular.",
-          metric: "p95 gecikme",
-          value: "480ms",
-        },
-      ] as const,
-      metrics: {
-        latency: {
-          title: "p95 gecikme",
-          criticalValue: "2.8s",
-          criticalDetail: "kritik",
-          healthyValue: "480ms",
-          healthyDetail: "iyileşti",
-        },
-        cache: {
-          title: "önbellek isabet oranı",
-          criticalValue: "41%",
-          criticalDetail: "zayıf",
-          healthyValue: "89%",
-          healthyDetail: "sağlıklı",
-        },
-        risk: {
-          title: "risk kapısı",
-          criticalValue: "izleniyor",
-          criticalDetail: "beklemede",
-          healthyValue: "onay",
-          healthyDetail: "aktif",
-        },
-        postmortem: {
-          title: "postmortem",
-          criticalValue: "taslak",
-          criticalDetail: "bekliyor",
-          healthyValue: "hazır",
-          healthyDetail: "oluşturuldu",
-        },
-      },
+    socialProof: ["Qwen üzerinde çalışan ekipler için", "Alibaba Cloud'a dağıtılabilir", "Tasarım gereği insan onaylı"] as const,
+    problem: {
+      title: "Olaylar beklemez. Araçlarınız da beklememeli.",
+      body:
+        "Yavaş yanıt sinyalleri kesintiye, sohbetleri karmaşaya ve kurtarmayı tahmine dönüştürür. OpsPilot, baskı kaosa dönüşmeden operatörlere kontrollü bir komut yolu verir.",
     },
     overview: {
       why: {
@@ -271,6 +155,8 @@ const landingContent = {
     compare: {
       badge: "OpsPilot Önce / Sonra",
       title: "Kaotik müdahaleden yapılandırılmış olay komutasına.",
+      beforeTitle: "OpsPilot Öncesi",
+      afterTitle: "OpsPilot Sonrası",
       pairs: [
         ["Manuel triage", "Yavaş, tutarsız kararlar", "Hızlı, kanıta dayalı eylemler"],
         ["Slack karmaşası", "Dağınık sohbet başlıkları", "Net komut akışı"],
@@ -281,8 +167,6 @@ const landingContent = {
     pillars: {
       badge: "Temel platform sütunları",
       title: "Tek yaşam döngüsü. Dört kontrollü aşama.",
-      description:
-        "Açılış sayfası artık dikkatleri ikincil modüllere dağıtmak yerine ürünün ana akışına odaklanıyor.",
       cta: "Komuta Merkezini İncele",
       items: [
         {
@@ -309,22 +193,22 @@ const landingContent = {
     },
     infoPanels: [
       {
-        title: "Jüri için",
-        label: "kanıt yolu",
+        title: "Platform Mühendisleri",
+        icon: "⌘",
         body:
-          "Açılış sayfasından başlayın, Komuta Merkezini açın, bir olayı çalıştırın, iyileştirmeyi onaylayın, sonra oluşturulan postmortem'i gösterin.",
+          "Dağınık sohbetlerde triage yapmayı bırakın. OpsPilot kanıtı, sıralı hipotezleri ve güvenli rollback'i tek komut akışında toplar.",
       },
       {
-        title: "Operatörler için",
-        label: "kontrol",
+        title: "Olay Komutanları",
+        icon: "◉",
         body:
-          "OpsPilot üretim eylemlerini körü körüne yürütmez. Güven, risk, politika ve insan onayını ayırır.",
+          "Yanıtı yavaşlatmadan kontrolde kalın. Her AI önerisi production'a dokunmadan önce onayınızı bekler.",
       },
       {
-        title: "Bulut kanıtı için",
-        label: "mimari",
+        title: "Mühendislik Liderleri",
+        icon: "▥",
         body:
-          "Arka uç Qwen uyumludur ve krediler aktif olduğunda yerel mock modundan Alibaba Cloud dağıtımına geçebilir.",
+          "Tam denetim izi, MTTR trendleri ve otomatik post-incident raporları. Ek toplantı olmadan görünürlük.",
       },
     ] as const,
   },
@@ -340,8 +224,9 @@ function getStoredLanguage(): Language {
 }
 
 export default function Home() {
-  const [activeStep, setActiveStep] = useState(0);
   const [language, setLanguage] = useState<Language>("EN");
+  const [mockupStep, setMockupStep] = useState(0);
+  const [mockupCycle, setMockupCycle] = useState(0);
 
   useEffect(() => {
     const syncLanguage = () => {
@@ -363,21 +248,35 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setActiveStep((current) => (current + 1) % landingContent[language].live.steps.length);
-    }, 1700);
+    const timers = [
+      window.setTimeout(() => setMockupStep(1), 1500),
+      window.setTimeout(() => setMockupStep(2), 3000),
+      window.setTimeout(() => setMockupStep(3), 4500),
+      window.setTimeout(() => setMockupStep(0), 5500),
+      window.setTimeout(() => setMockupCycle((cycle) => cycle + 1), 5500),
+    ];
 
-    return () => window.clearTimeout(timer);
-  }, [language, activeStep]);
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [mockupCycle]);
 
   const copy = landingContent[language];
-  const current = copy.live.steps[activeStep];
-  const selectedMetrics = copy.live.metrics;
-  const activeMetrics = [
-    [selectedMetrics.latency.title, activeStep >= 3 ? selectedMetrics.latency.healthyValue : selectedMetrics.latency.criticalValue, activeStep >= 3 ? selectedMetrics.latency.healthyDetail : selectedMetrics.latency.criticalDetail],
-    [selectedMetrics.cache.title, activeStep >= 3 ? selectedMetrics.cache.healthyValue : selectedMetrics.cache.criticalValue, activeStep >= 3 ? selectedMetrics.cache.healthyDetail : selectedMetrics.cache.criticalDetail],
-    [selectedMetrics.risk.title, activeStep >= 2 ? selectedMetrics.risk.healthyValue : selectedMetrics.risk.criticalValue, activeStep >= 2 ? selectedMetrics.risk.healthyDetail : selectedMetrics.risk.criticalDetail],
-    [selectedMetrics.postmortem.title, activeStep >= 3 ? selectedMetrics.postmortem.healthyValue : selectedMetrics.postmortem.criticalValue, activeStep >= 3 ? selectedMetrics.postmortem.healthyDetail : selectedMetrics.postmortem.criticalDetail],
+  const overviewCards = [
+    { ...copy.overview.why, dotClass: "bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.45)]" },
+    { ...copy.overview.how, dotClass: "bg-violet-300 shadow-[0_0_18px_rgba(167,139,250,0.45)]" },
+    { ...copy.overview.what, dotClass: "bg-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.42)]" },
+  ] as const;
+  const pillarAccentClasses = [
+    "border-t-[#3B82F6]",
+    "border-t-[#F59E0B]",
+    "border-t-[#06B6D4]",
+    "border-t-[#8B5CF6]",
+  ] as const;
+  const personaIconClasses = [
+    "border-cyan-300/25 bg-cyan-300/10 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.12)]",
+    "border-violet-300/25 bg-violet-300/10 text-violet-100 shadow-[0_0_24px_rgba(167,139,250,0.12)]",
+    "border-emerald-300/25 bg-emerald-300/10 text-emerald-100 shadow-[0_0_24px_rgba(52,211,153,0.12)]",
   ] as const;
 
   return (
@@ -400,17 +299,15 @@ export default function Home() {
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(2,6,23,0.02),rgba(15,23,42,0.48)_72%,rgba(15,23,42,0.76))]" />
         </div>
 
-        {/* Hero Section with Live Command Flow on Right */}
-        <div className="grid min-h-[550px] items-center gap-8 lg:grid-cols-2 mb-6">
-          {/* Left: Hero Content */}
-          <div className="flex flex-col justify-center">
+        {/* Hero Section */}
+        <div className="mb-10 grid min-h-[520px] items-center gap-10 lg:grid-cols-[1.02fr_0.98fr]">
+          <div className="flex max-w-4xl flex-col justify-center">
             <div className="mb-5 flex flex-wrap gap-3">
               <StatusBadge label={copy.badges[0]} tone="cyan" />
-              <StatusBadge label={copy.badges[1]} tone="violet" />
               <StatusBadge label={copy.badges[2]} tone="green" />
             </div>
 
-            <h1 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] text-white md:text-6xl">
+            <h1 className="max-w-4xl text-[2.5rem] font-black leading-[0.95] tracking-[-0.06em] text-white md:text-[4rem]">
               {copy.hero.titleLine1}
               <span className="block bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 bg-clip-text text-transparent">
                 {copy.hero.titleLine2}
@@ -431,123 +328,196 @@ export default function Home() {
 
               <Link
                 href="/simulation"
-                className="rounded-2xl border border-white/10 bg-white/[0.05] px-6 py-4 text-sm font-black text-white hover:bg-white/[0.09]"
+                className="rounded-2xl border border-white/12 px-6 py-4 text-sm font-bold text-slate-300 hover:border-cyan-300/30 hover:text-white"
               >
                 {copy.hero.secondaryCta}
               </Link>
 
               <Link
                 href="/architecture"
-                className="rounded-2xl border border-violet-400/20 bg-violet-400/12 px-6 py-4 text-sm font-black text-violet-100 hover:bg-violet-400/22"
+                className="inline-flex items-center rounded-2xl px-3 py-4 text-sm font-black text-slate-300 hover:text-cyan-100"
               >
-                {copy.hero.tertiaryCta}
+                {copy.hero.tertiaryCta} →
               </Link>
             </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 max-w-2xl">
-              {copy.hero.proofItems.map(([label, value]) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
-                  <div className="text-xs uppercase tracking-wider text-slate-400">{label}</div>
-                  <div className="mt-2 font-black text-white">{value}</div>
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* Right: Live Command Flow (Compact) */}
-          <div className="rounded-[2rem] border border-cyan-400/18 bg-slate-900/72 p-6 shadow-[0_0_50px_rgba(34,211,238,0.1)] h-full flex flex-col">
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <div>
-                <h2 className="text-xl font-black text-white">{copy.live.title}</h2>
-              <p className="mt-1 text-xs text-slate-300">{copy.live.subtitle}</p>
-            </div>
-            <StatusBadge label={copy.live.autoplay} tone="green" />
-          </div>
-
-            <div className="grid gap-2 grid-cols-2 mb-4 flex-grow">
-              <MetricCard title={activeMetrics[0][0]} value={activeMetrics[0][1]} detail={activeMetrics[0][2]} />
-              <MetricCard title={activeMetrics[1][0]} value={activeMetrics[1][1]} detail={activeMetrics[1][2]} />
-              <MetricCard title={activeMetrics[2][0]} value={activeMetrics[2][1]} detail={activeMetrics[2][2]} />
-              <MetricCard title={activeMetrics[3][0]} value={activeMetrics[3][1]} detail={activeMetrics[3][2]} />
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 mb-4 flex-grow flex flex-col justify-center">
-              <div className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">
-                {copy.live.stepLabel} {activeStep + 1}
-              </div>
-              <h3 className="mt-2 text-lg font-black text-white">{current.title}</h3>
-              <p className="mt-2 text-xs leading-5 text-slate-200">{current.detail}</p>
-
-              <div className="mt-3 rounded-xl border border-white/10 bg-slate-900/65 p-3">
-                <div className="text-xs uppercase tracking-wider text-slate-400">{current.metric}</div>
-                <div className="mt-1 text-2xl font-black text-white">{current.value}</div>
-              </div>
-            </div>
-
-            <div className="space-y-2 max-h-[160px] overflow-y-auto">
-              {copy.live.steps.map((step, index) => (
-                <button
-                  key={step.title}
-                  onClick={() => setActiveStep(index)}
-                  className={`flex w-full items-center justify-between rounded-xl border p-2 text-left transition text-xs ${
-                    index === activeStep
-                      ? "border-cyan-300 bg-cyan-300 text-slate-950"
-                      : index < activeStep
-                      ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
-                      : "border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.09]"
-                  }`}
-                >
-                  <span className="font-black">{step.title}</span>
-                  <span className="rounded-full border border-current/20 px-2 py-0.5 text-xs font-black">
-                    {index + 1}
+          <div className="relative">
+            <div className="absolute inset-0 rounded-[2.5rem] bg-cyan-400/20 blur-3xl" />
+            <div className="relative overflow-hidden rounded-[2rem] border border-cyan-300/18 bg-slate-950/78 p-4 shadow-[0_0_70px_rgba(34,211,238,0.16)]">
+              <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
+                <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">Command Center</div>
+                    <div className="mt-2 text-xl font-black text-white">Incident lifecycle console</div>
+                  </div>
+                  <span className="opspilot-live-pulse rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-black text-emerald-100">
+                    live
                   </span>
-                </button>
-              ))}
+                </div>
+
+                <div className="mt-5 grid gap-3">
+                  {copy.hero.mockupRows.map((row, index) => {
+                    const active = index === mockupStep;
+                    const completed = index < mockupStep;
+                    const gated = index >= 2;
+                    const status = index <= mockupStep ? (gated ? "gated" : "ready") : "standby";
+                    const pulseClass = active ? (gated ? "opspilot-amber-pulse" : "opspilot-green-pulse") : "";
+
+                    return (
+                    <div
+                      key={row}
+                      className={`flex items-center justify-between rounded-2xl border p-4 transition-all duration-500 ${
+                        active
+                          ? gated
+                            ? "border-amber-300/45 bg-amber-300/12"
+                            : "border-emerald-300/45 bg-emerald-300/12"
+                          : completed
+                          ? "border-emerald-300/20 bg-emerald-300/8"
+                          : "border-white/10 bg-slate-900/70"
+                      } ${pulseClass}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-black ${
+                          index <= mockupStep
+                            ? gated
+                              ? "border-amber-300/35 bg-amber-300/15 text-amber-100"
+                              : "border-emerald-300/35 bg-emerald-300/15 text-emerald-100"
+                            : "border-cyan-300/20 bg-cyan-300/8 text-cyan-100/70"
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div className="font-black text-white">{row}</div>
+                      </div>
+                      <StatusBadge label={status} tone={status === "ready" ? "green" : status === "gated" ? "amber" : "slate"} />
+                    </div>
+                    );
+                  })}
+                </div>
+
+                <Link href="/simulation" className="mt-5 inline-flex text-sm font-black text-cyan-100 hover:text-cyan-50">
+                  {copy.hero.mockupCaption}
+                </Link>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Why / How / What - Three Equal Cards */}
-        <section className="mb-6 grid gap-4 lg:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-slate-900/68 p-6 flex flex-col">
-            <StatusBadge label={copy.overview.why.badge} tone="cyan" />
-            <h3 className="mt-4 text-2xl font-black text-white">{copy.overview.why.title}</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-300 flex-grow">{copy.overview.why.body}</p>
-          </div>
+        <style jsx>{`
+          @keyframes opspilotGreenPulse {
+            0%, 100% {
+              box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.18), 0 0 24px rgba(52, 211, 153, 0.08);
+            }
+            50% {
+              box-shadow: 0 0 0 8px rgba(52, 211, 153, 0), 0 0 34px rgba(52, 211, 153, 0.18);
+            }
+          }
 
-          <div className="rounded-3xl border border-white/10 bg-slate-900/68 p-6 flex flex-col">
-            <StatusBadge label={copy.overview.how.badge} tone="violet" />
-            <h3 className="mt-4 text-2xl font-black text-white">{copy.overview.how.title}</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-300 flex-grow">{copy.overview.how.body}</p>
-          </div>
+          @keyframes opspilotAmberPulse {
+            0%, 100% {
+              box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.18), 0 0 24px rgba(251, 191, 36, 0.08);
+            }
+            50% {
+              box-shadow: 0 0 0 8px rgba(251, 191, 36, 0), 0 0 34px rgba(251, 191, 36, 0.18);
+            }
+          }
 
-          <div className="rounded-3xl border border-white/10 bg-slate-900/68 p-6 flex flex-col">
-            <StatusBadge label={copy.overview.what.badge} tone="green" />
-            <h3 className="mt-4 text-2xl font-black text-white">{copy.overview.what.title}</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-300 flex-grow">{copy.overview.what.body}</p>
+          @keyframes opspilotLivePulse {
+            0%, 100% {
+              box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.22);
+            }
+            50% {
+              box-shadow: 0 0 0 7px rgba(52, 211, 153, 0);
+            }
+          }
+
+          .opspilot-green-pulse {
+            animation: opspilotGreenPulse 1.4s ease-in-out infinite;
+          }
+
+          .opspilot-amber-pulse {
+            animation: opspilotAmberPulse 1.4s ease-in-out infinite;
+          }
+
+          .opspilot-live-pulse {
+            animation: opspilotLivePulse 1.6s ease-in-out infinite;
+          }
+
+          .opspilot-reveal {
+            animation: opspilotReveal 0.7s ease both;
+          }
+
+          @keyframes opspilotReveal {
+            from {
+              opacity: 0;
+              transform: translateY(18px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
+
+        <section className="opspilot-reveal mb-12 rounded-full border border-white/10 bg-white/[0.035] px-5 py-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-center text-sm font-bold text-slate-400">
+            {copy.socialProof.map((item, index) => (
+              <div key={item} className="flex items-center gap-5">
+                <span>{item}</span>
+                {index < copy.socialProof.length - 1 && <span className="text-cyan-300/40">•</span>}
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* Before vs After - Full Width 2x2 Grid */}
-        <section className="mb-6 rounded-[2rem] border border-white/10 bg-slate-900/68 p-8">
+        <section className="opspilot-reveal mb-20 py-10 text-center">
+          <h2 className="mx-auto max-w-5xl text-4xl font-black leading-tight tracking-[-0.04em] text-white md:text-6xl">
+            {copy.problem.title}
+          </h2>
+          <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-slate-400">
+            {copy.problem.body}
+          </p>
+        </section>
+        {/* Why / How / What - Three Equal Cards */}
+        <section className="opspilot-reveal mb-10 grid gap-4 lg:grid-cols-3">
+          {overviewCards.map((card) => (
+            <div key={card.badge} className="flex flex-col rounded-3xl border border-white/10 bg-slate-900/68 p-6">
+              <div className="flex items-center gap-3">
+                <span className={`h-3 w-3 rounded-full ${card.dotClass}`} />
+                <span className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">{card.badge}</span>
+              </div>
+              <h3 className="mt-5 text-2xl font-black text-white">{card.title}</h3>
+              <p className="mt-3 flex-grow text-sm leading-6 text-slate-300">{card.body}</p>
+            </div>
+          ))}
+        </section>
+
+        {/* Before vs After - Split Layout */}
+        <section className="opspilot-reveal mb-10 rounded-[2rem] border border-white/10 bg-slate-900/68 p-8">
           <div className="mb-6">
             <StatusBadge label={copy.compare.badge} tone="violet" />
             <h2 className="mt-4 text-3xl font-black text-white md:text-4xl">{copy.compare.title}</h2>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {copy.compare.pairs.map(([heading, before, after]) => (
-              <ValuePair key={heading} heading={heading} before={before} after={after} />
-            ))}
+          <div className="grid gap-5 lg:grid-cols-2">
+            <CompareColumn
+              title={copy.compare.beforeTitle}
+              tone="before"
+              items={copy.compare.pairs.map(([heading, before]) => [heading, before] as const)}
+            />
+            <CompareColumn
+              title={copy.compare.afterTitle}
+              tone="after"
+              items={copy.compare.pairs.map(([heading, , after]) => [heading, after] as const)}
+            />
           </div>
         </section>
 
-        <section className="mt-8 rounded-[2rem] border border-white/10 bg-slate-900/68 p-6">
+        <section className="opspilot-reveal mt-8 rounded-[2rem] border border-white/10 bg-slate-900/68 p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <StatusBadge label={copy.pillars.badge} tone="cyan" />
               <h2 className="mt-4 text-3xl font-black text-white md:text-5xl">{copy.pillars.title}</h2>
-              <p className="mt-4 max-w-3xl text-slate-300">{copy.pillars.description}</p>
             </div>
 
             <Link
@@ -560,7 +530,7 @@ export default function Home() {
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {copy.pillars.items.map((pillar, index) => (
-              <div key={pillar.title} className="rounded-3xl border border-white/10 bg-white/[0.05] p-5">
+              <div key={pillar.title} className={`rounded-3xl border border-t-[3px] border-white/10 bg-white/[0.05] p-5 ${pillarAccentClasses[index]}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs font-black text-cyan-100">
                     0{index + 1}
@@ -586,47 +556,73 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-8 grid gap-5 lg:grid-cols-[1fr_1fr_1fr]">
-          {copy.infoPanels.map((panel) => (
-            <InfoPanel key={panel.title} title={panel.title} label={panel.label} body={panel.body} />
+        <section className="opspilot-reveal mt-8 grid gap-5 lg:grid-cols-[1fr_1fr_1fr]">
+          {copy.infoPanels.map((panel, index) => (
+            <InfoPanel key={panel.title} title={panel.title} icon={panel.icon} body={panel.body} iconClass={personaIconClasses[index]} />
           ))}
         </section>
+
+        <section className="opspilot-reveal mt-10 rounded-[2rem] border border-cyan-300/18 bg-cyan-300/[0.055] px-6 py-10 text-center shadow-[0_0_60px_rgba(34,211,238,0.08)]">
+          <h2 className="text-3xl font-black tracking-[-0.04em] text-white md:text-5xl">{copy.hero.finalCtaTitle}</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-300">{copy.hero.finalCtaBody}</p>
+          <Link
+            href="/dashboard"
+            className="mt-7 inline-flex rounded-2xl bg-cyan-300 px-7 py-4 text-sm font-black text-slate-950 shadow-[0_0_36px_rgba(34,211,238,0.16)] hover:bg-cyan-200"
+          >
+            {copy.hero.primaryCta}
+          </Link>
+        </section>
+
+        <footer className="opspilot-reveal mt-10 rounded-[2rem] border border-white/10 bg-white/[0.035] px-6 py-6">
+          <div className="flex flex-col gap-4 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
+            <div>
+              <span className="font-black text-white">OpsPilot</span>
+              <span className="ml-3">AI incident command for safer recovery.</span>
+            </div>
+            <div className="flex flex-wrap gap-4 font-bold">
+              <Link href="/dashboard" className="hover:text-cyan-100">Command Center</Link>
+              <Link href="/simulation" className="hover:text-cyan-100">Simulation</Link>
+              <Link href="/architecture" className="hover:text-cyan-100">Architecture</Link>
+            </div>
+          </div>
+        </footer>
       </section>
     </PlatformShell>
   );
 }
 
-function MetricCard({ title, value, detail }: { title: string; value: string; detail: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-      <div className="text-xs uppercase tracking-wider text-slate-500">{title}</div>
-      <div className="mt-2 text-2xl font-black text-white">{value}</div>
-      <div className="mt-2 text-xs font-bold text-cyan-200">{detail}</div>
-    </div>
-  );
-}
-
-function InfoPanel({ title, label, body }: { title: string; label: string; body: string }) {
+function InfoPanel({ title, icon, body, iconClass }: { title: string; icon: string; body: string; iconClass: string }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-slate-900/68 p-6">
-      <StatusBadge label={label} tone="violet" />
-      <h3 className="mt-4 text-2xl font-black text-white">{title}</h3>
+      <div className={`flex h-16 w-16 items-center justify-center rounded-3xl border text-3xl font-black ${iconClass}`}>
+        {icon}
+      </div>
+      <h3 className="mt-5 text-2xl font-black text-white">{title}</h3>
       <p className="mt-3 text-sm leading-7 text-slate-300">{body}</p>
     </div>
   );
 }
 
-function ValuePair({ heading, before, after }: { heading: string; before: string; after: string }) {
+function CompareColumn({ title, tone, items }: { title: string; tone: "before" | "after"; items: readonly (readonly [string, string])[] }) {
+  const toneClass =
+    tone === "after"
+      ? "border-emerald-300/20 bg-emerald-300/[0.06]"
+      : "border-red-400/14 bg-red-500/[0.035]";
+  const dotClass = tone === "after" ? "bg-[#22C55E] shadow-[0_0_14px_rgba(34,197,94,0.4)]" : "bg-[#EF4444]/70";
+
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
-      <div className="text-xs uppercase tracking-wider text-slate-500">{heading}</div>
-      <div className="mt-4 flex items-start gap-3 text-sm text-slate-300">
-        <div className="min-w-[8rem] font-black text-white">Before</div>
-        <div>{before}</div>
-      </div>
-      <div className="mt-3 flex items-start gap-3 text-sm text-slate-300">
-        <div className="min-w-[8rem] font-black text-white">After</div>
-        <div>{after}</div>
+    <div className={`rounded-3xl border p-5 ${toneClass}`}>
+      <h3 className="text-xl font-black text-white">{title}</h3>
+      <div className="mt-5 space-y-3">
+        {items.map(([heading, detail]) => (
+          <div key={`${title}-${heading}`} className="rounded-2xl border border-white/10 bg-slate-950/42 p-4">
+            <div className="flex items-center gap-3">
+              <span className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />
+              <div className="text-sm font-black text-white">{heading}</div>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-300">{detail}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
