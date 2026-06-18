@@ -80,6 +80,20 @@ export async function getIncidentTimeline(incidentId: string) {
   return fetchJson(`${API_BASE_URL}/api/incidents/${incidentId}/timeline`);
 }
 
+export async function addIncidentTimelineEvent(incidentId: string, event: string, message: string, actor: string) {
+  return fetchJson(`${API_BASE_URL}/api/incidents/${incidentId}/timeline`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ event, message, actor })
+  });
+}
+
+export async function getIncidentAiInsights(incidentId: string) {
+  return fetchJson(`${API_BASE_URL}/api/incidents/${incidentId}/ai-insights`);
+}
+
 export async function assignIncident(incidentId: string, assignee: string) {
   return fetchJson(`${API_BASE_URL}/api/incidents/${incidentId}/assign`, {
     method: "POST",
