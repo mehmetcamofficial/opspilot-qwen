@@ -5,6 +5,9 @@ from typing import Any, Dict, List, Literal, Optional
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from app.schemas.incidents import CreateIncidentRequest
+from app.services.incident_service import orchestrator
+
 router = APIRouter(prefix="/api/incidents", tags=["api-incidents"])
 
 IncidentState = Literal["open", "investigating", "mitigating", "resolved"]
@@ -60,6 +63,71 @@ class AssignIncidentRequest(BaseModel):
 def reset_incident_state() -> None:
     incident_store.clear()
     notification_events.clear()
+
+
+def _orchestrator_incident_state(incident_id: str) -> dict[str, Any]:
+    return orchestrator.get_incident(incident_id)
+
+
+def _timeline_from_orchestrator_state(state: dict[str, Any]) -> list[dict[str, Any]]:
+    timeline: list[dict[str, Any]] = []
+    for index, item in enumerate(state.get("agent_timeline", []), start=1):
+        timeline.append(
+            {
+                "event": "agent_progress",
+                "message": f"{item.get('agent', 'unknown_agent')} -> {item.get('status', 'unknown')}",
+                "actor": item.get("agent", "system"),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "metadata": {
+                    "step": index,
+                    "agent": item.get("agent", "unknown_agent"),
+                    "status": item.get("status", "unknown"),
+                },
+            }
+        )
+    return timeline
+
+
+def _ai_insights_from_orchestrator_state(state: dict[str, Any]) -> dict[str, Any]:
+    alert = state.get("alert", {})
+    triage = state.get("triage_result", {})
+    review = state.get("risk_review", {})
+    return {
+        "incident_id": state["incident_id"],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "root_causes": [
+            {
+                "title": state.get("hypothesis_result", {}).get("leading_hypothesis", {}).get("title", "Primary hypothesis unavailable"),
+                "confidence": state.get("hypothesis_result", {}).get("leading_hypothesis", {}).get("confidence", 0.0),
+                "evidence": [
+                    state.get("observability_result", {}).get("summary", "No observability summary available."),
+                    state.get("runbook_result", {}).get("summary", "No runbook summary available."),
+                ],
+            }
+        ],
+        "similar_incidents": [],
+        "triage": {
+            "severity": triage.get("severity", "medium"),
+            "suggested_assignee": state.get("alert", {}).get("labels", {}).get("team", "platform-responder"),
+            "reason": triage.get("summary", "Derived from orchestrator triage output."),
+        },
+        "escalation": {
+            "should_escalate": state.get("status") == "awaiting_approval",
+            "reason": "Awaiting operator approval." if state.get("status") == "awaiting_approval" else "No escalation required yet.",
+        },
+        "safety_check": {
+            "risk_level": review.get("action_reviews", [{}])[0].get("risk_level", "medium"),
+            "requires_confirmation": state.get("status") == "awaiting_approval",
+            "explanation": review.get("summary", "Safety review summary unavailable."),
+        },
+        "anomaly": {
+            "detected": True,
+            "baseline": "normal operating threshold",
+            "current": alert.get("description", "Current signal unavailable."),
+            "deviation": triage.get("severity", "medium"),
+        },
+        "summary": state.get("approval_brief", {}).get("summary", triage.get("summary", "AI summary unavailable.")),
+    }
 
 
 def append_timeline_event(
@@ -243,13 +311,29 @@ async def parse_bulk_payload(request: Request) -> BulkImportRequest:
 
 
 @router.post("")
-async def create_incident(incident: SyntheticIncident):
+async def create_incident(request: Request):
+    payload = await request.json()
+
+    if isinstance(payload, dict) and "alert" in payload:
+        validated = CreateIncidentRequest.model_validate(payload)
+        state = await orchestrator.create_incident(validated.alert.model_dump())
+        return {
+            "incident_id": state["incident_id"],
+            "status": state["status"],
+            "state": state,
+        }
+
+    incident = SyntheticIncident.model_validate(payload)
     return store_incident(incident)
 
 
 @router.get("")
 async def list_incidents():
-    return list(incident_store.values())
+    synthetic_incidents = list(incident_store.values())
+    orchestrated_incidents = orchestrator.list_incidents()
+    if orchestrated_incidents:
+        return {"incidents": orchestrated_incidents}
+    return {"incidents": synthetic_incidents}
 
 
 @router.get("/notifications")
@@ -267,7 +351,11 @@ async def get_incident_timeline(incident_id: str):
     try:
         incident = incident_store[incident_id]
     except KeyError:
-        raise HTTPException(status_code=404, detail="Incident not found")
+        try:
+            state = _orchestrator_incident_state(incident_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="Incident not found")
+        return {"incident_id": incident_id, "timeline": _timeline_from_orchestrator_state(state)}
     return {"incident_id": incident_id, "timeline": incident.get("timeline", [])}
 
 
@@ -343,7 +431,11 @@ async def get_incident_ai_insights(incident_id: str):
     try:
         incident = incident_store[incident_id]
     except KeyError:
-        raise HTTPException(status_code=404, detail="Incident not found")
+        try:
+            state = _orchestrator_incident_state(incident_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="Incident not found")
+        return _ai_insights_from_orchestrator_state(state)
     return ai_insights_for(incident)
 
 
@@ -352,7 +444,23 @@ async def get_incident(incident_id: str):
     try:
         return incident_store[incident_id]
     except KeyError:
+        try:
+            return _orchestrator_incident_state(incident_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="Incident not found")
+
+
+@router.post("/{incident_id}/approve")
+async def approve_incident(incident_id: str):
+    try:
+        state = await orchestrator.approve_and_execute(incident_id)
+    except KeyError:
         raise HTTPException(status_code=404, detail="Incident not found")
+    return {
+        "incident_id": state["incident_id"],
+        "status": state["status"],
+        "state": state,
+    }
 
 
 @router.post("/{incident_id}/transition")

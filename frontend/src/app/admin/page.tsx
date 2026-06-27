@@ -110,9 +110,9 @@ function freshState(): GovernanceState {
       { id: "frontend-vercel", label: "Frontend deployed on Vercel", ready: true },
       { id: "backend-local", label: "FastAPI backend working locally", ready: true },
       { id: "dockerfile", label: "Dockerfile prepared", ready: true },
-      { id: "ecs-plan", label: "Alibaba ECS deployment plan", ready: true },
+      { id: "ecs-plan", label: "Alibaba ECS rollout plan approved", ready: true },
       { id: "qwen-real", label: "Qwen real API mode tested", ready: false },
-      { id: "credits", label: "Cloud credits activated", ready: false },
+      { id: "credits", label: "Alibaba Cloud credits activated", ready: true },
       { id: "prod-url", label: "Production backend URL connected", ready: false },
     ],
     auditLog: [
@@ -125,7 +125,7 @@ function freshState(): GovernanceState {
       {
         id: "audit-mock-mode",
         actor: "system",
-        message: "Mock Qwen mode selected to avoid pay-as-you-go usage",
+        message: "Alibaba Cloud credits are active; mock mode remains available as the stable fallback",
         timestamp: "initial state",
       },
     ],
@@ -373,12 +373,12 @@ export default function AdminPage() {
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
             <h2 className="text-2xl font-black text-white">Platform switches</h2>
-            <p className="mt-2 text-sm text-slate-400">Every control below changes local governance state and writes an audit event.</p>
+            <p className="mt-2 text-sm text-slate-400">Every control below changes local governance state and writes an audit event for the post-credit rollout path.</p>
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
                 <div className="text-sm font-black text-white">Model mode</div>
-                <div className="mt-1 text-sm text-slate-400">Mock mode avoids pay-as-you-go risk.</div>
+                <div className="mt-1 text-sm text-slate-400">Credits are active now, and mock mode remains available for stable demos.</div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
@@ -388,7 +388,7 @@ export default function AdminPage() {
                     Mock
                   </button>
                   <button
-                    onClick={() => commit((previous) => ({ ...previous, modelMode: "qwen_live" }), "Qwen live mode selected as pending", "amber")}
+                    onClick={() => commit((previous) => ({ ...previous, modelMode: "qwen_live" }), "Qwen live mode selected", "green")}
                     className={`rounded-2xl px-4 py-3 text-sm font-black ${state.modelMode === "qwen_live" ? "bg-violet-300 text-slate-950" : "border border-white/10 bg-white/[0.04] text-slate-200"}`}
                   >
                     Qwen Live
@@ -443,14 +443,14 @@ export default function AdminPage() {
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               <MiniState label="Approval mode" value={state.approvalFreeze ? "Frozen" : "Active"} />
               <MiniState label="Audit export" value={state.auditExportEnabled ? "Enabled" : "Disabled"} />
-              <MiniState label="Model safety" value={state.modelMode === "mock" ? "Cost-safe mock" : "Qwen live pending"} />
+              <MiniState label="Model safety" value={state.modelMode === "mock" ? "Mock fallback enabled" : "Qwen live enabled"} />
               <MiniState label="Last readiness check" value={state.lastReadinessCheck} />
             </div>
           </section>
 
           <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
             <h2 className="text-2xl font-black text-white">Deployment readiness control</h2>
-            <p className="mt-2 text-sm text-slate-400">Toggle readiness items as deployment conditions change.</p>
+            <p className="mt-2 text-sm text-slate-400">Toggle readiness items as the Alibaba Cloud rollout moves from approval to live execution.</p>
 
             <div className="mt-6 space-y-3">
               {state.deployment.map((item) => (

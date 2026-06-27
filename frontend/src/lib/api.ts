@@ -22,19 +22,21 @@ export const demoAlertPayload = {
 };
 
 async function fetchJson(url: string, options?: RequestInit) {
+  const method = options?.method || "GET";
   try {
     const res = await fetch(url, options);
     if (!res.ok) {
       const body = await res.text();
-      const message = body ? `${res.status} ${res.statusText}: ${body}` : `${res.status} ${res.statusText}`;
-      throw new Error(message);
+      const status = `${res.status} ${res.statusText}`;
+      const detail = body ? ` | body: ${body}` : "";
+      throw new Error(`HTTP ${status} for ${method} ${url}${detail}`);
     }
     return res.json();
   } catch (error: unknown) {
     if (error instanceof Error) {
-      throw new Error(`Backend request failed: ${error.message}`);
+      throw new Error(`Backend request failed for ${method} ${url}: ${error.message}`);
     }
-    throw new Error("Backend request failed due to an unknown error.");
+    throw new Error(`Backend request failed for ${method} ${url} due to an unknown error.`);
   }
 }
 
@@ -43,7 +45,7 @@ export async function healthcheck() {
 }
 
 export async function createIncident() {
-  return fetchJson(`${API_BASE_URL}/incidents`, {
+  return fetchJson(`${API_BASE_URL}/api/incidents`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -53,7 +55,7 @@ export async function createIncident() {
 }
 
 export async function listIncidents() {
-  return fetchJson(`${API_BASE_URL}/incidents`);
+  return fetchJson(`${API_BASE_URL}/api/incidents`);
 }
 
 export async function approveIncident(incidentId: string) {

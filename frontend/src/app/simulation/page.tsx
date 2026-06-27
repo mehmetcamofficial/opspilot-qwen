@@ -267,7 +267,7 @@ export default function SimulationPage() {
             <div className="mb-4 flex flex-wrap gap-3">
               <StatusBadge label="Simulation Lab" tone="cyan" />
               <StatusBadge label={running ? "running" : approvalRequired ? "approval pause" : completed ? "completed" : "standby"} tone={running ? "cyan" : approvalRequired ? "amber" : completed ? "green" : "slate"} />
-              <StatusBadge label="no cloud cost" tone="violet" />
+              <StatusBadge label="credits active / safe demo" tone="green" />
             </div>
 
             <h1 className="text-4xl font-black text-white md:text-6xl">

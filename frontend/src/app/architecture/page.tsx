@@ -6,8 +6,8 @@ const layers = [
   ["Experience layer", "Next.js dashboard, admin console, architecture page, simulation, and knowledge graph."],
   ["API layer", "FastAPI endpoints for incident creation, approval, status, and future admin operations."],
   ["Agent layer", "Triage, observability, runbook, hypothesis, remediation, risk, approval, execution, review, and postmortem agents."],
-  ["Reasoning layer", "Qwen Cloud model API for reasoning, planning, risk review, and generation after credits activate."],
-  ["Platform layer", "Vercel frontend, Docker-ready backend, planned Alibaba Cloud ECS deployment, state and audit trail."],
+  ["Reasoning layer", "Qwen Cloud model API for reasoning, planning, risk review, and generation now that credits are active."],
+  ["Platform layer", "Vercel frontend, Docker-ready backend, Alibaba Cloud ECS rollout path, state, and audit trail."],
 ];
 
 export default function ArchitecturePage() {
@@ -17,12 +17,12 @@ export default function ArchitecturePage() {
         <div className="mb-8">
           <div className="mb-4 flex flex-wrap gap-3">
             <StatusBadge label="Architecture" tone="cyan" />
-            <StatusBadge label="Qwen-ready" tone="violet" />
-            <StatusBadge label="ECS deployment-ready" tone="green" />
+            <StatusBadge label="Credits active" tone="green" />
+            <StatusBadge label="ECS rollout ready" tone="violet" />
           </div>
           <h1 className="text-4xl font-black text-white md:text-6xl">System architecture</h1>
           <p className="mt-4 max-w-3xl text-slate-400">
-            OpsPilot is designed as a layered, safety-aware, multi-agent incident operations platform.
+            OpsPilot is designed as a layered, safety-aware, multi-agent incident operations platform with an active path to Alibaba Cloud and live Qwen reasoning.
           </p>
         </div>
 

@@ -25,7 +25,14 @@ const landingContent = {
       mockupCaption: "Live incident command — see it in action →",
       mockupRows: ["Signal intake", "Evidence linked", "Human approval", "Recovery record"] as const,
     },
-    socialProof: ["Built for teams running on Qwen", "Deployable on Alibaba Cloud", "Human-in-the-loop by design"] as const,
+    socialProof: ["Built for teams running on Qwen", "Alibaba Cloud credits active", "Human-in-the-loop by design"] as const,
+    cloudUpdate: {
+      badge: "Alibaba Cloud Update",
+      title: "Credits are active. Live rollout can begin.",
+      body:
+        "The previous cloud billing blocker is cleared. OpsPilot can now move from preview-safe workflows to Alibaba Cloud ECS rollout and live Qwen-backed reasoning on your timeline.",
+      items: ["Credits confirmed", "Qwen live path unlocked", "ECS backend rollout next"] as const,
+    },
     problem: {
       title: "Incidents do not wait. Your tools should not either.",
       body:
@@ -110,6 +117,31 @@ const landingContent = {
           "Full audit trail, MTTR trends, and post-incident reports generated automatically. Visibility without another meeting.",
       },
     ] as const,
+    howItWorks: {
+      badge: "How it works",
+      title: "From alert to postmortem in five controlled steps.",
+      steps: [
+        { title: "Alert Ingest", body: "Receive and normalize incoming signals from monitoring systems." },
+        { title: "Multi-Agent Investigation", body: "9 Qwen-powered agents triage, correlate evidence, and rank hypotheses." },
+        { title: "Risk Review", body: "Policy engine evaluates remediation safety before any action reaches production." },
+        { title: "Human Approval", body: "Operators review the evidence package and approve or reject proposed actions." },
+        { title: "Execution + Postmortem", body: "Approved remediation runs, outcome is verified, and a full postmortem is generated." },
+      ] as const,
+    },
+    whyItMatters: {
+      badge: "Why it matters",
+      title: "Built for teams that cannot afford slow or unsafe incident response.",
+      items: [
+        { title: "Faster incident triage", body: "Seconds instead of hours — agents correlate signals automatically." },
+        { title: "Safer remediation", body: "No action touches production without explicit human approval." },
+        { title: "Audit-friendly timeline", body: "Every decision and action is recorded for compliance and learning." },
+        { title: "Automatic postmortem", body: "Postmortem reports generated from real data, not manual recall." },
+      ] as const,
+    },
+    poweredBy: {
+      title: "Powered by",
+      items: ["Qwen Cloud", "FastAPI", "Next.js", "Alibaba Cloud Ready"] as const,
+    },
   },
   TR: {
     badges: ["Qwen destekli", "Autopilot ajan akışı", "İnsan onaylı"],
@@ -126,7 +158,14 @@ const landingContent = {
       mockupCaption: "Canlı olay komutunu görün — simülasyonda incele →",
       mockupRows: ["Sinyal alımı", "Kanıt bağlandı", "İnsan onayı", "Kurtarma kaydı"] as const,
     },
-    socialProof: ["Qwen üzerinde çalışan ekipler için", "Alibaba Cloud'a dağıtılabilir", "Tasarım gereği insan onaylı"] as const,
+    socialProof: ["Qwen üzerinde çalışan ekipler için", "Alibaba Cloud kredisi aktif", "Tasarım gereği insan onaylı"] as const,
+    cloudUpdate: {
+      badge: "Alibaba Cloud Güncellemesi",
+      title: "Krediler aktif. Canlı geçiş başlatılabilir.",
+      body:
+        "Önceki cloud faturalama engeli kalktı. OpsPilot artık preview-safe akışlardan Alibaba Cloud ECS yayınına ve canlı Qwen destekli akıl yürütmeye sizin takviminizle geçebilir.",
+      items: ["Kredi doğrulandı", "Qwen live yolu açıldı", "Sıradaki adım ECS backend yayını"] as const,
+    },
     problem: {
       title: "Olaylar beklemez. Araçlarınız da beklememeli.",
       body:
@@ -211,6 +250,31 @@ const landingContent = {
           "Tam denetim izi, MTTR trendleri ve otomatik post-incident raporları. Ek toplantı olmadan görünürlük.",
       },
     ] as const,
+    howItWorks: {
+      badge: "Nasıl çalışır",
+      title: "Alarmdan postmortem'e beş kontrollü adım.",
+      steps: [
+        { title: "Alarm Alımı", body: "İzleme sistemlerinden gelen sinyalleri al ve normalize et." },
+        { title: "Multi-Ajan İnceleme", body: "9 Qwen destekli ajan triage yapar, kanıtı ilişkilendirir ve hipotezleri sıralar." },
+        { title: "Risk İncelemesi", body: "Politika motoru, her eylem üretime ulaşmadan iyileştirme güvenliğini değerlendirir." },
+        { title: "İnsan Onayı", body: "Operatörler kanıt paketini inceler ve önerilen eylemleri onaylar veya reddeder." },
+        { title: "Yürütme + Postmortem", body: "Onaylanan iyileştirme çalışır, sonuç doğrulanır ve tam postmortem oluşturulur." },
+      ] as const,
+    },
+    whyItMatters: {
+      badge: "Neden önemli",
+      title: "Yavaş veya güvensiz olay yanıtını karşılayamayan ekipler için tasarlandı.",
+      items: [
+        { title: "Daha hızlı triage", body: "Saatler yerine saniyeler — ajanlar sinyalleri otomatik olarak ilişkilendirir." },
+        { title: "Daha güvenli iyileştirme", body: "Açık insan onayı olmadan hiçbir eylem üretime dokunmaz." },
+        { title: "Denetim dostu zaman çizelgesi", body: "Her karar ve eylem uyumluluk ve öğrenme için kaydedilir." },
+        { title: "Otomatik postmortem", body: "Postmortem raporları gerçek verilerden oluşturulur, manuel hatırdan değil." },
+      ] as const,
+    },
+    poweredBy: {
+      title: "Destekleyen",
+      items: ["Qwen Cloud", "FastAPI", "Next.js", "Alibaba Cloud Ready"] as const,
+    },
   },
 } satisfies Record<Language, unknown>;
 
@@ -470,6 +534,29 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="opspilot-reveal mb-12 rounded-[2rem] border border-emerald-300/18 bg-emerald-300/[0.055] p-6 shadow-[0_0_60px_rgba(52,211,153,0.08)]">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-3xl">
+              <StatusBadge label={copy.cloudUpdate.badge} tone="green" />
+              <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-white md:text-4xl">
+                {copy.cloudUpdate.title}
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-slate-300">{copy.cloudUpdate.body}</p>
+            </div>
+
+            <div className="grid min-w-0 gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+              {copy.cloudUpdate.items.map((item) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-4 text-sm font-bold text-emerald-50"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="opspilot-reveal mb-20 py-10 text-center">
           <h2 className="mx-auto max-w-5xl text-4xl font-black leading-tight tracking-[-0.04em] text-white md:text-6xl">
             {copy.problem.title}
@@ -478,6 +565,47 @@ export default function Home() {
             {copy.problem.body}
           </p>
         </section>
+
+        {/* How it works — 5-step pipeline */}
+        <section className="opspilot-reveal mb-10 rounded-[2rem] border border-white/10 bg-slate-900/68 p-8">
+          <div className="mb-6">
+            <StatusBadge label={copy.howItWorks.badge} tone="cyan" />
+            <h2 className="mt-4 text-3xl font-black text-white md:text-4xl">{copy.howItWorks.title}</h2>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-5">
+            {copy.howItWorks.steps.map((step, index) => {
+              const accentBorder = [
+                "border-t-cyan-300",
+                "border-t-violet-300",
+                "border-t-amber-300",
+                "border-t-emerald-300",
+                "border-t-sky-300",
+              ] as const;
+              const accentBg = [
+                "bg-cyan-300/10 text-cyan-100",
+                "bg-violet-300/10 text-violet-100",
+                "bg-amber-300/10 text-amber-100",
+                "bg-emerald-300/10 text-emerald-100",
+                "bg-sky-300/10 text-sky-100",
+              ] as const;
+
+              return (
+                <div key={step.title} className={`rounded-3xl border border-t-[3px] border-white/10 bg-white/[0.05] p-5 ${accentBorder[index]}`}>
+                  <div className={`rounded-2xl border border-white/10 px-3 py-2 text-xs font-black ${accentBg[index]}`}>
+                    0{index + 1}
+                  </div>
+                  <h3 className="mt-4 text-lg font-black text-white">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{step.body}</p>
+                  {index < copy.howItWorks.steps.length - 1 && (
+                    <div className="mt-3 text-center text-slate-500/40 md:block hidden">↓</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
         {/* Why / How / What - Three Equal Cards */}
         <section className="opspilot-reveal mb-10 grid gap-4 lg:grid-cols-3">
           {overviewCards.map((card) => (
@@ -556,6 +684,30 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Why it matters */}
+        <section className="opspilot-reveal mb-8 rounded-[2rem] border border-white/10 bg-slate-900/68 p-8">
+          <div className="mb-6">
+            <StatusBadge label={copy.whyItMatters.badge} tone="amber" />
+            <h2 className="mt-4 text-3xl font-black text-white md:text-4xl">{copy.whyItMatters.title}</h2>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {copy.whyItMatters.items.map((item, index) => {
+              const dotColors = ["bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.45)]", "bg-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.42)]", "bg-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.45)]", "bg-violet-300 shadow-[0_0_18px_rgba(167,139,250,0.45)]"] as const;
+
+              return (
+                <div key={item.title} className="rounded-3xl border border-white/10 bg-white/[0.05] p-5">
+                  <div className="flex items-center gap-3">
+                    <span className={`h-3 w-3 rounded-full ${dotColors[index]}`} />
+                    <h3 className="text-lg font-black text-white">{item.title}</h3>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">{item.body}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
         <section className="opspilot-reveal mt-8 grid gap-5 lg:grid-cols-[1fr_1fr_1fr]">
           {copy.infoPanels.map((panel, index) => (
             <InfoPanel key={panel.title} title={panel.title} icon={panel.icon} body={panel.body} iconClass={personaIconClasses[index]} />
@@ -571,6 +723,19 @@ export default function Home() {
           >
             {copy.hero.primaryCta}
           </Link>
+        </section>
+
+        {/* Powered by */}
+        <section className="opspilot-reveal mb-6 rounded-[2rem] border border-white/10 bg-white/[0.035] px-6 py-5 text-center">
+          <div className="text-sm font-black text-slate-400 mb-3">{copy.poweredBy.title}</div>
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            {copy.poweredBy.items.map((item, index) => (
+              <div key={item} className="flex items-center gap-4">
+                <span className="rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-2.5 text-sm font-black text-white">{item}</span>
+                {index < copy.poweredBy.items.length - 1 && <span className="text-cyan-300/30">+</span>}
+              </div>
+            ))}
+          </div>
         </section>
 
         <footer className="opspilot-reveal mt-10 rounded-[2rem] border border-white/10 bg-white/[0.035] px-6 py-6">

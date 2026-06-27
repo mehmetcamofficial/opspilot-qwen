@@ -37,6 +37,17 @@ type IncidentState = {
   triage_result?: {
     affected_service?: string;
     severity?: string;
+    confidence?: number;
+    incident_type?: string;
+  };
+  observability_result?: {
+    confidence?: number;
+    evidence_strength?: string;
+    summary?: string;
+  };
+  runbook_result?: {
+    confidence?: number;
+    summary?: string;
   };
   hypothesis_result?: {
     confidence?: number;
@@ -44,12 +55,32 @@ type IncidentState = {
   };
   risk_review?: {
     risk_level?: string;
+    confidence?: number;
   };
   remediation_plan?: {
     candidate_actions?: Array<{ title?: string }>;
+    confidence?: number;
+  };
+  approval_brief?: {
+    confidence?: number;
+  };
+  execution_review?: {
+    outcome?: string;
+    resolution_confidence?: number;
+    metric_changes?: Array<{ metric_name?: string; before?: number; after?: number; interpretation?: string }>;
+    recommended_next_step?: string;
   };
   postmortem?: {
     summary?: string;
+    confidence?: number;
+    incident_title?: string;
+    impact_summary?: string;
+    root_cause_summary?: string;
+    timeline_summary?: string[];
+    actions_taken?: string[];
+    what_worked?: string[];
+    what_failed_or_was_missing?: string[];
+    follow_up_items?: Array<{ title?: string; priority?: string; owner_role?: string }>;
   };
   agent_timeline?: TimelineItem[];
 };
@@ -110,18 +141,18 @@ const dashboardCopy = {
   EN: {
     operationalMode: "Operational Mode",
     frontendMode: "Frontend: Vercel",
-    backendMode: "Backend: Local FastAPI",
-    qwenReady: "Qwen-ready / mock-safe",
-    bannerBody: "Live preview is deployed on Vercel. The interactive Command Center can run with a local FastAPI backend, while Qwen-compatible orchestration is shown through a safe mock fallback.",
+    backendMode: "Backend: FastAPI preview",
+    qwenReady: "Qwen live-ready",
+    bannerBody: "Alibaba Cloud credits are now active. The Command Center remains preview-safe while the rollout path to ECS deployment and live Qwen orchestration is unlocked.",
     runSimulation: "Run safe simulation →",
     error: "Error",
     frontend: "Frontend",
     backend: "Backend",
     qwenMode: "Qwen mode",
-    cloudBilling: "Cloud billing",
-    localValue: "Vercel / local",
-    mockFallback: "mock fallback",
-    creditsPending: "credits pending",
+    cloudBilling: "Cloud credits",
+    localValue: "Vercel + preview backend",
+    liveValue: "live path unlocked",
+    creditsActive: "credits active",
     liveAlertStream: "Live alert stream",
     liveAlertBody: "Incoming operational alerts from the backend stream. Promote a signal when it needs incident command.",
     sseFeed: "SSE feed",
@@ -382,18 +413,18 @@ const dashboardCopy = {
   TR: {
     operationalMode: "Operasyon Modu",
     frontendMode: "Frontend: Vercel",
-    backendMode: "Backend: Lokal FastAPI",
-    qwenReady: "Qwen hazır / mock güvenli",
-    bannerBody: "Canlı önizleme Vercel üzerinde çalışır. Etkileşimli Komuta Merkezi lokal FastAPI backend ile çalışabilir; Qwen uyumlu orkestrasyon güvenli mock fallback ile gösterilir.",
+    backendMode: "Backend: FastAPI önizleme",
+    qwenReady: "Qwen live hazır",
+    bannerBody: "Alibaba Cloud kredileri artık aktif. Komuta Merkezi preview-safe kalırken ECS yayınına ve canlı Qwen orkestrasyonuna geçiş yolu açıldı.",
     runSimulation: "Güvenli simülasyonu çalıştır →",
     error: "Hata",
     frontend: "Frontend",
     backend: "Backend",
     qwenMode: "Qwen modu",
     cloudBilling: "Cloud kredileri",
-    localValue: "Vercel / lokal",
-    mockFallback: "mock fallback",
-    creditsPending: "kredi bekliyor",
+    localValue: "Vercel + önizleme backend",
+    liveValue: "canlı yol açık",
+    creditsActive: "kredi aktif",
     liveAlertStream: "Canlı uyarı akışı",
     liveAlertBody: "Backend akışından gelen operasyonel uyarılar. Olay komutuna ihtiyaç olduğunda sinyali olaya dönüştür.",
     sseFeed: "SSE akışı",
@@ -704,6 +735,22 @@ function displayTimelineStatus(agent: string | undefined, status: string | undef
   return status || "completed";
 }
 
+function agentConfidence(state: IncidentState | null, agent: string | undefined): number | null {
+  if (!state || !agent) return null;
+  switch (agent) {
+    case "triage_agent": return state.triage_result?.confidence ?? null;
+    case "observability_agent": return state.observability_result?.confidence ?? null;
+    case "runbook_agent": return state.runbook_result?.confidence ?? null;
+    case "hypothesis_agent": return state.hypothesis_result?.confidence ?? null;
+    case "remediation_planner_agent": return state.remediation_plan?.confidence ?? null;
+    case "risk_safety_agent": return state.risk_review?.confidence ?? null;
+    case "approval_agent": return state.approval_brief?.confidence ?? null;
+    case "execution_review_agent": return state.execution_review?.resolution_confidence ?? null;
+    case "postmortem_agent": return state.postmortem?.confidence ?? null;
+    default: return null;
+  }
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
@@ -925,6 +972,8 @@ function timelineFromState(state: IncidentState | null) {
     { agent: "remediation_planner_agent", status: "waiting" },
     { agent: "risk_safety_agent", status: "waiting" },
     { agent: "approval_agent", status: "waiting" },
+    { agent: "execution_review_agent", status: "waiting" },
+    { agent: "postmortem_agent", status: "waiting" },
   ];
 }
 
@@ -1346,6 +1395,22 @@ export default function DashboardPage() {
         title={copy.reportTitle}
       />
 
+      {isResolved && (
+        <div className="mx-4 mb-5 max-w-7xl rounded-3xl border border-emerald-300/30 bg-emerald-300/10 p-5 shadow-[0_0_40px_rgba(52,211,153,0.12)] print:hidden sm:mx-6 xl:mx-auto">
+          <div className="flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-300/20">
+              <svg className="h-5 w-5 text-emerald-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-emerald-50">{copy.remediationApprovedDone}</h2>
+              <p className="mt-1 text-sm text-emerald-100/70">{postmortemSummary(incident, copy)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="mx-4 mb-8 max-w-7xl rounded-[1.5rem] border border-cyan-400/15 bg-slate-950/70 p-4 shadow-[0_0_32px_rgba(34,211,238,0.06)] print:hidden sm:mx-6 xl:mx-auto">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
@@ -1366,6 +1431,17 @@ export default function DashboardPage() {
             <p className="mt-2 max-w-5xl text-xs leading-5 text-slate-400">
               {copy.bannerBody}
             </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-slate-200">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                {copy.frontend}: {copy.localValue}
+              </span>
+              <span className="rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1 text-violet-100">
+                {copy.qwenMode}: {copy.liveValue}
+              </span>
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-emerald-100">
+                {copy.cloudBilling}: {copy.creditsActive}
+              </span>
+            </div>
           </div>
 
           <a
@@ -1378,6 +1454,20 @@ export default function DashboardPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-12 pt-6 print:hidden sm:px-6">
+        <div className="mb-8 rounded-3xl border border-cyan-400/15 bg-slate-950/70 p-6 shadow-[0_0_50px_rgba(34,211,238,0.08)]">
+          <h1 className="text-2xl font-black tracking-[-0.04em] text-white md:text-3xl">
+            AI Incident Commander for Production Teams
+          </h1>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">
+            OpsPilot uses 9 specialized Qwen-powered agents to investigate incidents, plan remediation, require human approval, execute safely, and generate postmortems.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <span className="rounded-2xl border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-xs font-black text-cyan-100">9 AI Agents</span>
+            <span className="rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-100">Human-in-the-loop Approval</span>
+            <span className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-xs font-black text-emerald-100">Auto Postmortem</span>
+            <span className="rounded-2xl border border-violet-300/25 bg-violet-300/10 px-4 py-2 text-xs font-black text-violet-100">Qwen Cloud Ready</span>
+          </div>
+        </div>
         <ToastStack items={toasts} onDismiss={(id) => setToasts((current) => current.filter((item) => item.id !== id))} />
 
         {showOnboarding && (
@@ -1902,29 +1992,47 @@ export default function DashboardPage() {
                   </div>
                   <StatusBadge label={`${incidentTimeline.length} ${copy.events}`} tone={incidentTimeline.length ? "green" : "slate"} />
                 </div>
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  {timeline.map((item: TimelineItem, index: number) => (
-                    <div key={`${item.agent}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div title={item.agent} className="text-sm font-black leading-5 text-cyan-100">
-                            {agentDisplayName(item.agent)}
-                          </div>
-                          <div className="mt-1 text-xs text-slate-500">{copy.agentStep} {index + 1}</div>
-                        </div>
-                        <div className="shrink-0 rounded-full border border-white/10 bg-slate-950/50 px-2.5 py-1 text-xs font-black text-slate-400">
-                          {index + 1}
-                        </div>
-                      </div>
+                <div className="mt-5 space-y-0">
+                  {timeline.map((item: TimelineItem, index: number) => {
+                    const isLast = index === timeline.length - 1;
+                    const displayStatus = displayTimelineStatus(item.agent, item.status, isResolved);
+                    const confidence = agentConfidence(incident, item.agent);
+                    const isActive = displayStatus === "active" || (item.status === "waiting" && incident && !isResolved && index === timeline.findIndex((t) => t.status === "waiting"));
+                    const tone = toneForStatus(displayStatus);
+                    const dotColor = isResolved ? "bg-emerald-300" : tone === "green" ? "bg-emerald-300" : tone === "amber" ? "bg-amber-300" : tone === "violet" ? "bg-violet-300" : tone === "cyan" ? "bg-cyan-300" : isActive ? "bg-cyan-300" : "bg-slate-500";
+                    const borderColor = isResolved ? "border-emerald-300/30" : tone === "green" ? "border-emerald-300/30" : tone === "amber" ? "border-amber-300/30" : tone === "violet" ? "border-violet-300/30" : isActive ? "border-cyan-300/30" : "border-white/10";
+                    const bgColor = isResolved ? "bg-emerald-300/10" : tone === "green" ? "bg-emerald-300/10" : tone === "amber" ? "bg-amber-300/10" : tone === "violet" ? "bg-violet-300/10" : isActive ? "bg-cyan-300/10" : "bg-white/[0.035]";
+                    const ringClass = isActive && !isResolved ? "ring-2 ring-cyan-300/40 ring-offset-1 ring-offset-slate-950" : "";
 
-                      <div className="mt-3">
-                        <StatusBadge
-                          label={displayTimelineStatus(item.agent, item.status, isResolved)}
-                          tone={toneForStatus(displayTimelineStatus(item.agent, item.status, isResolved))}
-                        />
+                    return (
+                      <div key={`${item.agent}-${index}`} className="relative pl-10">
+                        {!isLast && <div className="absolute left-[15px] top-5 h-full w-px bg-white/10" />}
+                        <div className={`absolute left-2 top-1.5 flex h-7 w-7 items-center justify-center rounded-full border ${borderColor} bg-slate-950 ${ringClass}`}>
+                          <div className={`h-3 w-3 rounded-full ${dotColor} ${isActive && !isResolved ? "animate-pulse" : ""}`} />
+                        </div>
+                        <div className={`mb-3 rounded-2xl border ${borderColor} ${bgColor} p-4 transition-all duration-300 ${ringClass}`}>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-black text-white">{agentDisplayName(item.agent)}</div>
+                              <div className="mt-1 text-xs text-slate-500">{copy.agentStep} {index + 1} / {timeline.length}</div>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2">
+                              {confidence !== null && (
+                                <span className={`rounded-full px-2 py-0.5 text-[11px] font-black ${
+                                  confidence >= 0.85 ? "bg-emerald-300/15 text-emerald-100 border border-emerald-300/30" :
+                                  confidence >= 0.7 ? "bg-cyan-300/15 text-cyan-100 border border-cyan-300/30" :
+                                  "bg-amber-300/15 text-amber-100 border border-amber-300/30"
+                                }`}>
+                                  {Math.round(confidence * 100)}%
+                                </span>
+                              )}
+                              <StatusBadge label={displayStatus} tone={tone} />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="mt-5 rounded-3xl border border-cyan-400/15 bg-cyan-400/10 p-4">
@@ -1951,21 +2059,78 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="mt-5 grid gap-3 md:grid-cols-3">
-                  <MiniReview label={copy.action} value={isResolved ? copy.rollbackExecuted : copy.waitingApproval} />
-                  <MiniReview label={copy.validation} value={isResolved ? copy.latencyRecovered : copy.notStarted} />
-                  <MiniReview label={copy.risk} value={isResolved ? copy.reduced : copy.medium} />
+                  <MiniReview label={copy.action} value={isResolved ? (incident?.execution_review?.outcome || copy.rollbackExecuted) : copy.waitingApproval} />
+                  <MiniReview label={copy.validation} value={isResolved ? (incident?.execution_review?.metric_changes?.[0]?.interpretation || copy.latencyRecovered) : copy.notStarted} />
+                  <MiniReview label={copy.risk} value={isResolved ? (incident?.execution_review?.resolution_confidence ? `${Math.round((incident.execution_review.resolution_confidence ?? 0) * 100)}% ${copy.reduced}` : copy.reduced) : copy.medium} />
                 </div>
 
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  <MiniReview label="p95 latency" value={isResolved ? "2.8s → 480ms" : "2.8s"} />
-                  <MiniReview label={copy.cacheHitRatio} value={isResolved ? "41% → 89%" : "41%"} />
-                </div>
+                {isResolved && incident?.execution_review?.metric_changes && incident.execution_review.metric_changes.length > 0
+                  ? (
+                    <div className="mt-5 grid gap-4 md:grid-cols-2">
+                      {incident.execution_review.metric_changes.map((mc) => {
+                        const beforeVal = mc.before ?? 0;
+                        const afterVal = mc.after ?? 0;
+                        const pctImprovement = beforeVal !== 0
+                          ? beforeVal > afterVal
+                            ? Math.round(((beforeVal - afterVal) / beforeVal) * 100)
+                            : Math.round(((afterVal - beforeVal) / beforeVal) * 100)
+                          : 0;
+                        const improved = beforeVal > afterVal;
+                        const isRatio = mc.metric_name?.includes("ratio") || mc.metric_name?.includes("hit");
+                        const fmtBefore = isRatio ? `${Math.round(beforeVal * 100)}%` : `${beforeVal}`;
+                        const fmtAfter = isRatio ? `${Math.round(afterVal * 100)}%` : `${afterVal}`;
+                        const fmtUnit = mc.metric_name?.includes("latency") ? "ms" : "";
+
+                        return (
+                          <div key={mc.metric_name || "metric"} className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+                            <div className="text-sm font-black text-white">{mc.metric_name || "metric"}</div>
+                            <div className="mt-4 grid grid-cols-2 gap-4">
+                              <div className="rounded-2xl border border-amber-300/20 bg-amber-300/8 p-3">
+                                <div className="text-[11px] font-black uppercase tracking-wider text-amber-100/60">Before remediation</div>
+                                <div className="mt-2 text-xl font-black text-amber-100">{fmtBefore}{fmtUnit}</div>
+                              </div>
+                              <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/8 p-3">
+                                <div className="text-[11px] font-black uppercase tracking-wider text-emerald-100/60">After remediation</div>
+                                <div className="mt-2 text-xl font-black text-emerald-100">{fmtAfter}{fmtUnit}</div>
+                              </div>
+                            </div>
+                            <div className="mt-3 flex items-center gap-2">
+                              <span className={`text-sm font-black ${improved ? "text-emerald-200" : "text-amber-200"}`}>
+                                {improved ? "↓" : "↑"} {pctImprovement}% {improved ? "improvement" : "increase"}
+                              </span>
+                            </div>
+                            {mc.interpretation && (
+                              <p className="mt-2 text-xs leading-5 text-slate-400">{mc.interpretation}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+                  : (
+                    <div className="mt-5 grid gap-3 md:grid-cols-2">
+                      <MiniReview label="p95 latency" value={isResolved ? "2.8s → 480ms" : "2.8s"} />
+                      <MiniReview label={copy.cacheHitRatio} value={isResolved ? "41% → 89%" : "41%"} />
+                    </div>
+                  )
+                }
 
                 <div className={`mt-5 rounded-3xl border p-5 ${isResolved ? "border-emerald-400/20 bg-emerald-400/10" : "border-white/10 bg-white/[0.035]"}`}>
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h3 className="font-black text-white">{isResolved ? copy.postmortemGenerated : copy.postmortemPreview}</h3>
-                      <p className="mt-3 text-sm leading-6 text-slate-300">{postmortemSummary(incident, copy)}</p>
+                      {isResolved && incident?.postmortem?.root_cause_summary
+                        ? (
+                          <div className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+                            <p><span className="font-bold text-emerald-100">{copy.rootCause}:</span> {incident.postmortem.root_cause_summary}</p>
+                            <p><span className="font-bold text-emerald-100">{copy.impact}:</span> {incident.postmortem.impact_summary}</p>
+                            {incident.postmortem.follow_up_items && incident.postmortem.follow_up_items.length > 0 && (
+                              <p><span className="font-bold text-emerald-100">{copy.followUps}:</span> {incident.postmortem.follow_up_items.map((f) => f.title).join(", ")}</p>
+                            )}
+                          </div>
+                        )
+                        : <p className="mt-3 text-sm leading-6 text-slate-300">{postmortemSummary(incident, copy)}</p>
+                      }
                     </div>
                     <StatusBadge label={isResolved ? copy.final : copy.draft} tone={isResolved ? "green" : "slate"} />
                   </div>

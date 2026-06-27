@@ -21,10 +21,10 @@ const posts = [
     excerpt: "OpsPilot is designed to use Qwen-compatible reasoning for hypotheses, remediation planning, risk review, and postmortem generation.",
   },
   {
-    title: "Alibaba Cloud ECS deployment plan",
+    title: "Alibaba Cloud ECS rollout unlocked",
     category: "Deployment",
-    status: "Archived",
-    excerpt: "The FastAPI backend is Docker-ready and prepared for Alibaba Cloud ECS after hackathon credits are activated.",
+    status: "Published",
+    excerpt: "Alibaba Cloud credits are active, so the FastAPI backend can move from rollout plan to ECS deployment execution.",
   },
 ];
 
@@ -36,11 +36,11 @@ export default function BlogPage() {
           <div className="mb-4 flex flex-wrap gap-3">
             <StatusBadge label="Blog" tone="cyan" />
             <StatusBadge label="EN / TR ready" tone="violet" />
-            <StatusBadge label="Admin CMS planned" tone="amber" />
+            <StatusBadge label="Credits active" tone="green" />
           </div>
           <h1 className="text-4xl font-black text-white md:text-6xl">OpsPilot Intelligence Blog</h1>
           <p className="mt-4 max-w-3xl text-slate-400">
-            A content hub for AI operations, incident response, Qwen Cloud integration, safety policy, and cloud deployment notes.
+            A content hub for AI operations, incident response, Qwen Cloud integration, safety policy, and the newly unlocked Alibaba Cloud rollout.
           </p>
         </div>
 
